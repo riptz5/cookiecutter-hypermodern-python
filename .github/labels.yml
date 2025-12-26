@@ -75,3 +75,29 @@
 - name: "skip-changelog"
   description: Changes that should be omitted from the release notes
   color: ededed
+
+# Agent Integration Labels
+- name: agents
+  description: Core agent functionality
+  color: 6f42c1
+- name: langgraph
+  description: LangGraph specific
+  color: 1f77b4
+- name: google-adk
+  description: Google ADK specific
+  color: 4285f4
+- name: mcp
+  description: Model Context Protocol
+  color: ff6b6b
+- name: a2a-protocol
+  description: Agent2Agent protocol
+  color: 00c853
+- name: gcp-deploy
+  description: Google Cloud deployment
+  color: fbbc04
+- name: rfc
+  description: Request for Comments - Architecture decisions
+  color: f9a825
+- name: bridge
+  description: LangGraph-ADK bridge/interop
+  color: 9c27b0

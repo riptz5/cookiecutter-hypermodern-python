@@ -1,0 +1,89 @@
+name: "📋 RFC (Request for Comments)"
+description: "Propose an architectural decision or major change"
+title: "[RFC] "
+labels: ["rfc"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Request for Comments
+        Use this template for architectural decisions that need discussion.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One paragraph explanation of the proposal
+      placeholder: This RFC proposes...
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why are we doing this? What problem does it solve?
+      placeholder: |
+        Currently, we have X problem...
+        This causes Y issues...
+    validations:
+      required: true
+
+  - type: textarea
+    id: detailed-design
+    attributes:
+      label: Detailed Design
+      description: Explain the design in enough detail for implementation
+      placeholder: |
+        ## Architecture
+        ```
+        ┌─────────┐
+        │ Component │
+        └─────────┘
+        ```
+        
+        ## API
+        ```python
+        class NewFeature:
+            ...
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches were considered?
+      placeholder: |
+        1. Alternative A: ...
+        2. Alternative B: ...
+
+  - type: textarea
+    id: drawbacks
+    attributes:
+      label: Drawbacks
+      description: What are the potential downsides?
+
+  - type: textarea
+    id: adoption
+    attributes:
+      label: Adoption Strategy
+      description: How will this be rolled out?
+      placeholder: |
+        1. Phase 1: ...
+        2. Phase 2: ...
+
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Affected Areas
+      options:
+        - label: LangGraph integration
+        - label: Google ADK integration
+        - label: A2A Protocol
+        - label: MCP
+        - label: GCP Deployment
+        - label: Cookiecutter template
+        - label: CI/CD
+        - label: Documentation

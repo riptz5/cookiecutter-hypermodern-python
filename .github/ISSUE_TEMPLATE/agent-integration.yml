@@ -1,0 +1,73 @@
+name: "🤖 Agent Integration"
+description: "Propose a new agent integration or feature"
+title: "[Agent] "
+labels: ["agents", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve agent integration!
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      description: Which agent framework is this related to?
+      options:
+        - LangGraph
+        - Google ADK
+        - Both (Bridge)
+        - MCP
+        - A2A Protocol
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What do you want to integrate or improve?
+      placeholder: Describe the integration...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Why is this needed? What problem does it solve?
+      placeholder: |
+        As a developer, I want to...
+        So that I can...
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How should this be implemented?
+      placeholder: |
+        ```python
+        # Example code
+        ```
+
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Target Milestone
+      options:
+        - M0: Foundation
+        - M1: LangGraph Integration
+        - M2: Google ADK Integration
+        - M3: A2A/MCP Bridge
+        - M4: GCP Deploy
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched for existing issues
+        - label: This aligns with the project roadmap
+        - label: I can help implement this

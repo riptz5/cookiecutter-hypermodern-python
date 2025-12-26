@@ -1,0 +1,27 @@
+# CODEOWNERS - Hypermodern Python + Agents
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner
+* @riptz5
+
+# Agent-related code requires review
+{{cookiecutter.project_name}}/src/*/agents/ @riptz5
+{{cookiecutter.project_name}}/src/*/mcp/ @riptz5
+
+# Bridge is critical - extra scrutiny
+{{cookiecutter.project_name}}/src/*/agents/bridge.py @riptz5
+
+# CI/CD changes
+.github/workflows/ @riptz5
+
+# Configuration files
+.agent/ @riptz5
+AGENTS.md @riptz5
+{{cookiecutter.project_name}}/AGENTS.md @riptz5
+
+# Dependencies
+{{cookiecutter.project_name}}/pyproject.toml @riptz5
+{{cookiecutter.project_name}}/poetry.lock @riptz5
+
+# Cookiecutter config
+cookiecutter.json @riptz5
