@@ -1,0 +1,50 @@
+cc5f1da Merge genesis-implementation: resolve conflicts in __main__.py
+5e2e778 Merge branch 'feat/genesis-multiagent-system' into main
+40ef241 feat: Implement autopoietic multi-agent system
+8f429f3 feat(genesis): implement autopoietic multi-agent system
+fc7bfd2 fix: Update post_gen hook to clean optional files based on features
+b8d582c feat: Complete GCP discovery system with tests and consolidation
+9f51676 feat: Replace hardcoded services with dynamic plugin architecture
+7da2325 feat: Add Google Cloud automatic discovery system
+1f5aa1d docs: Add standard testing procedure
+4819a29 docs: Update Primary Directive in AGENTS.md
+3d8a68f feat: Add tests for Google ADK agent - 100% coverage
+727a66b feat: Add Google ADK and Google Cloud integration
+5cba764 feat: Add Python script and documentation for adding issues to project
+4ae9b38 docs: Add instructions and script to add issues to project board
+fd7d852 docs: Add quick start guide for agent orchestration
+b70e7a5 feat: Add complete agent orchestration system
+cfd1da7 docs: Add agent orchestration roadmap with timeline estimates
+abd816e docs: Add README for issue creation process
+948ecfa docs: Add comprehensive development plan and issue creation script
+e72457e fix: Remove undefined cookiecutter.documentation variable from AGENTS.md template
+f28c9bf ci: Add template validation workflow (#15)
+c788cc1 feat(langgraph): Add LangGraph integration option (#13)
+9753c64 feat: Complete M0 Foundation - Agent infrastructure
+63f33f2 chore: Setup GitHub infrastructure for agent integration
+7b1843d Bump virtualenv from 20.14.1 to 20.26.2 in /.github/workflows
+4f1caad Bump pre-commit from 3.1.0 to 3.7.1 in /.github/workflows
+c3a6507 Bump poetry from 1.3.2 to 1.8.3 in /.github/workflows
+6759969 Bump furo from 2022.12.7 to 2024.5.6 in /docs
+7e42094 Bump myst-parser from 0.18.1 to 3.0.1 in /docs
+a33bcc8 Bump sphinx from 5.3.0 to 7.3.7 in /docs
+df96fd5 Bump sphinx-autobuild from 2021.3.14 to 2024.4.16 in /docs
+f814d19 Bump nox from 2022.11.21 to 2024.4.15 in /.github/workflows
+319cad8 Bump actions/setup-python from 4.5.0 to 5.1.0
+499164a Bump pip from 23.0.1 to 24.0 in /.github/workflows
+d6dec6d Bump nox-poetry from 1.0.2 to 1.0.3 in /.github/workflows
+88fd1c0 Bump cookiecutter from 2.1.1 to 2.6.0 in /.github/workflows
+054bee6 Bump actions/cache from 3 to 4
+42c63f0 Bump crazy-max/ghaction-github-labeler from 4.1.0 to 5.0.0
+331a9aa Bump actions/checkout from 3 to 4
+3c324c5 Bump actions/upload-artifact from 3 to 4
+ce17b3f Bump release-drafter/release-drafter from 5.23.0 to 6.0.0
+af0fd99 Bump nox-poetry from 1.0.2 to 1.0.3 in /.github/workflows
+cbe5b3f Bump pip from 23.0.1 to 23.1.2 in /.github/workflows
+d44fa06 Bump pypa/gh-action-pypi-publish from 1.6.4 to 1.8.6
+ee51c5b Bump codecov/codecov-action from 3.1.1 to 3.1.4
+6bb2c98 Bump actions/setup-python from 4.5.0 to 4.6.1
+9343fc8 Bump setuptools from 67.3.2 to 67.4.0
+609c9a9 Bump flake8-rst-docstrings from 0.2.5 to 0.3.0
+7376d95 Bump markdown-it-py from 2.1.0 to 2.2.0
+83007e4 Bump imagesize from 1.3.0 to 1.4.1
