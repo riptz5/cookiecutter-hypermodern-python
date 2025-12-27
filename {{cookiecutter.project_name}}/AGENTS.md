@@ -50,9 +50,7 @@ We use `nox` for all testing and automation tasks.
 | `nox` | Run full test suite and linting (Default) |
 | `nox -s tests` | Run unit tests only |
 | `nox -s lint` | Run code quality checks |
-{%- if cookiecutter.documentation == 'y' %}
 | `nox -s docs` | Build documentation |
-{%- endif %}
 
 ### Code Quality Rules
 - **Coverage**: 100% test coverage is required.
