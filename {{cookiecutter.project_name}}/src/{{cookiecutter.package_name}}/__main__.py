@@ -1,6 +1,27 @@
-"""Command-line interface."""
+"""Command-line interface for {{cookiecutter.friendly_name}}.
+
+Provides commands for:
+- Multi-agent task execution
+- System verification
+- GENESIS autopoietic cycles
+- GCP resource discovery
+
+Examples:
+    # Run multi-agent task
+    $ {{cookiecutter.project_name}} multi "Research AI trends"
+    
+    # Verify system setup
+    $ {{cookiecutter.project_name}} verify
+    
+    # Run GENESIS cycle
+    $ {{cookiecutter.project_name}} genesis cycle
+    
+    # Single agent query
+    $ {{cookiecutter.project_name}} ask "What is Python?"
+"""
 import asyncio
 import logging
+import os
 import sys
 
 import click
@@ -288,8 +309,6 @@ def discover(ctx: click.Context) -> None:
 @click.pass_context
 def verify(ctx: click.Context) -> None:
     """Verify the production setup."""
-    import os
-    
     click.echo("Verifying production setup...")
     click.echo("=" * 40)
     
