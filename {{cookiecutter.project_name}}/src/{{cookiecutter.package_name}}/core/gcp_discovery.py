@@ -6,10 +6,12 @@ This module discovers:
 - Enabled services/APIs
 - Available credentials (ADC)
 - Active resources (databases, storage, etc.)
-- Secret Manager secrets
-- Vertex AI models
 
-NO hardcoding - everything is discovered automatically from GCP.
+ZERO HARDCODING - Uses plugin architecture:
+- Services are discovered dynamically
+- Plugins handle resource discovery
+- New services = new plugins (no core code changes)
+- Adapts automatically to GCP changes
 """
 import os
 from typing import Dict, List, Optional, Any
@@ -20,14 +22,19 @@ try:
     import google.auth
     from google.auth.credentials import Credentials
     from google.cloud import service_usage_v1
-    from google.cloud import secretmanager
-    from google.cloud import storage
-    from google.cloud import firestore
-    from google.cloud import bigquery
-    from google.cloud import aiplatform
     HAS_GCP = True
 except ImportError:
     HAS_GCP = False
+
+try:
+    from .gcp_plugins import (
+        create_plugin_registry,
+        discover_custom_plugins,
+        PluginRegistry,
+    )
+    HAS_PLUGINS = True
+except ImportError:
+    HAS_PLUGINS = False
 
 logger = logging.getLogger(__name__)
 
@@ -59,27 +66,30 @@ class GCPService:
 
 @dataclass
 class GCPResources:
-    """Discovered GCP resources."""
+    """Discovered GCP resources.
+    
+    Uses dynamic plugin system - NO hardcoded resource types.
+    """
     project: GCPProject
     services: List[GCPService] = field(default_factory=list)
-    secrets: List[str] = field(default_factory=list)
-    storage_buckets: List[str] = field(default_factory=list)
-    firestore_collections: List[str] = field(default_factory=list)
-    bigquery_datasets: List[str] = field(default_factory=list)
-    vertex_models: List[str] = field(default_factory=list)
+    service_resources: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
-        return {
+        result = {
             "project_id": self.project.project_id,
             "region": self.project.region,
+            "enabled_services": len([s for s in self.services if s.enabled]),
             "services": [s.name for s in self.services if s.enabled],
-            "secrets_count": len(self.secrets),
-            "storage_buckets_count": len(self.storage_buckets),
-            "firestore_collections_count": len(self.firestore_collections),
-            "bigquery_datasets_count": len(self.bigquery_datasets),
-            "vertex_models_count": len(self.vertex_models),
         }
+        
+        # Add resource counts dynamically
+        for service_name, resources in self.service_resources.items():
+            if "count" in resources:
+                service_key = service_name.split('.')[0]
+                result[f"{service_key}_count"] = resources["count"]
+        
+        return result
 
 
 class GCPDiscovery:
@@ -89,25 +99,34 @@ class GCPDiscovery:
     Discovers project, services, and resources automatically.
     """
     
-    def __init__(self, project_id: Optional[str] = None):
+    def __init__(self, project_id: Optional[str] = None, custom_plugins: Optional[List[Any]] = None):
         """Initialize GCP discovery.
         
         Args:
             project_id: Optional project ID. If None, auto-discovers from ADC.
+            custom_plugins: Optional list of custom plugins to register
         """
         if not HAS_GCP:
             raise ImportError(
                 "Google Cloud libraries not installed. "
-                "Install with: pip install google-cloud-service-usage "
-                "google-cloud-secret-manager google-cloud-storage "
-                "google-cloud-firestore google-cloud-bigquery "
-                "google-cloud-aiplatform"
+                "Install with: pip install google-cloud-service-usage google-auth"
             )
         
         self.project_id = project_id
         self.credentials: Optional[Credentials] = None
         self._project: Optional[GCPProject] = None
         self._resources: Optional[GCPResources] = None
+        
+        # Initialize plugin registry
+        if HAS_PLUGINS:
+            # Discover custom plugins automatically
+            discovered_plugins = discover_custom_plugins()
+            all_custom = (custom_plugins or []) + discovered_plugins
+            self.plugin_registry = create_plugin_registry(additional_plugins=all_custom if all_custom else None)
+            logger.info(f"Plugin system initialized with {len(self.plugin_registry.plugins)} plugins")
+        else:
+            self.plugin_registry = None
+            logger.warning("Plugin system not available - limited discovery")
     
     def discover_project(self) -> GCPProject:
         """Discover GCP project using Application Default Credentials.
@@ -189,121 +208,85 @@ class GCPDiscovery:
             logger.warning(f"Could not discover services: {e}")
             return []
     
-    def discover_secrets(self) -> List[str]:
-        """Discover secrets in Secret Manager.
+    def add_custom_plugin(self, plugin: Any):
+        """Add a custom plugin at runtime.
         
-        Returns:
-            List of secret names
+        Args:
+            plugin: Plugin implementing GCPServicePlugin protocol
+            
+        Example:
+            >>> class MyServicePlugin(BaseGCPPlugin):
+            ...     @property
+            ...     def service_patterns(self):
+            ...         return ['myservice']
+            ...     
+            ...     def discover_resources(self, project_id, credentials, region):
+            ...         # Custom discovery logic
+            ...         return {"type": "items", "count": 0, "resources": []}
+            >>> 
+            >>> discovery = GCPDiscovery()
+            >>> discovery.add_custom_plugin(MyServicePlugin())
         """
-        project = self.discover_project()
-        
-        try:
-            client = secretmanager.SecretManagerServiceClient(credentials=self.credentials)
-            parent = f"projects/{project.project_id}"
-            
-            secrets = []
-            for secret in client.list_secrets(request={"parent": parent}):
-                secret_name = secret.name.split("/")[-1]
-                secrets.append(secret_name)
-            
-            logger.info(f"✓ Discovered {len(secrets)} secrets")
-            return secrets
-        
-        except Exception as e:
-            logger.warning(f"Could not discover secrets: {e}")
-            return []
+        if self.plugin_registry:
+            self.plugin_registry.plugins.append(plugin)
+            logger.info(f"Added custom plugin: {plugin.__class__.__name__}")
     
-    def discover_storage_buckets(self) -> List[str]:
-        """Discover Cloud Storage buckets.
+    def discover_all_service_resources(self) -> Dict[str, Dict[str, Any]]:
+        """Discover resources for ALL enabled services using plugins.
+        
+        This method:
+        1. Gets list of enabled services from GCP
+        2. For each service, finds matching plugin
+        3. Plugin discovers resources dynamically
+        4. ZERO HARDCODING - adapts to any service
+        
+        New service? Just add a plugin. No core code changes.
         
         Returns:
-            List of bucket names
+            Dict mapping service names to their resources
         """
+        if not self.plugin_registry:
+            logger.warning("Plugin system not available")
+            return {}
+        
         project = self.discover_project()
+        services = self.discover_enabled_services()
+        all_resources = {}
         
-        try:
-            client = storage.Client(
-                project=project.project_id,
-                credentials=self.credentials
-            )
+        logger.info(f"Discovering resources for {len(services)} enabled services using plugins...")
+        
+        for service in services:
+            if not service.enabled:
+                continue
             
-            buckets = [bucket.name for bucket in client.list_buckets()]
-            logger.info(f"✓ Discovered {len(buckets)} storage buckets")
-            return buckets
-        
-        except Exception as e:
-            logger.warning(f"Could not discover storage buckets: {e}")
-            return []
-    
-    def discover_firestore_collections(self) -> List[str]:
-        """Discover Firestore collections.
-        
-        Returns:
-            List of collection names
-        """
-        project = self.discover_project()
-        
-        try:
-            db = firestore.Client(
-                project=project.project_id,
-                credentials=self.credentials
-            )
+            # Find plugin that can handle this service
+            plugin = self.plugin_registry.find_plugin(service.name)
             
-            collections = [col.id for col in db.collections()]
-            logger.info(f"✓ Discovered {len(collections)} Firestore collections")
-            return collections
+            if plugin:
+                logger.debug(f"Found plugin for {service.display_name}")
+                try:
+                    resources = plugin.discover_resources(
+                        project_id=project.project_id,
+                        credentials=self.credentials,
+                        region=project.region
+                    )
+                    
+                    if "error" not in resources and resources.get("count", 0) > 0:
+                        all_resources[service.name] = resources
+                        logger.info(
+                            f"✓ {service.display_name}: {resources['count']} "
+                            f"{resources.get('type', 'resources')}"
+                        )
+                except Exception as e:
+                    logger.debug(f"Could not discover {service.display_name}: {e}")
+            else:
+                logger.debug(f"No plugin for {service.display_name} - skipping")
         
-        except Exception as e:
-            logger.warning(f"Could not discover Firestore collections: {e}")
-            return []
-    
-    def discover_bigquery_datasets(self) -> List[str]:
-        """Discover BigQuery datasets.
-        
-        Returns:
-            List of dataset IDs
-        """
-        project = self.discover_project()
-        
-        try:
-            client = bigquery.Client(
-                project=project.project_id,
-                credentials=self.credentials
-            )
-            
-            datasets = [dataset.dataset_id for dataset in client.list_datasets()]
-            logger.info(f"✓ Discovered {len(datasets)} BigQuery datasets")
-            return datasets
-        
-        except Exception as e:
-            logger.warning(f"Could not discover BigQuery datasets: {e}")
-            return []
-    
-    def discover_vertex_models(self) -> List[str]:
-        """Discover Vertex AI models.
-        
-        Returns:
-            List of model resource names
-        """
-        project = self.discover_project()
-        
-        try:
-            aiplatform.init(
-                project=project.project_id,
-                location=project.region,
-                credentials=self.credentials
-            )
-            
-            models = [model.resource_name for model in aiplatform.Model.list()]
-            logger.info(f"✓ Discovered {len(models)} Vertex AI models")
-            return models
-        
-        except Exception as e:
-            logger.warning(f"Could not discover Vertex AI models: {e}")
-            return []
+        logger.info(f"Discovered resources for {len(all_resources)} services")
+        return all_resources
     
     def discover_all(self) -> GCPResources:
-        """Discover all GCP resources.
+        """Discover all GCP resources using plugin system.
         
         Returns:
             Complete resource inventory
@@ -312,19 +295,17 @@ class GCPDiscovery:
             return self._resources
         
         logger.info("=" * 80)
-        logger.info("DISCOVERING GOOGLE CLOUD RESOURCES")
+        logger.info("DISCOVERING GOOGLE CLOUD RESOURCES (PLUGIN-BASED)")
         logger.info("=" * 80)
         
         project = self.discover_project()
+        services = self.discover_enabled_services()
+        service_resources = self.discover_all_service_resources()
         
         resources = GCPResources(
             project=project,
-            services=self.discover_enabled_services(),
-            secrets=self.discover_secrets(),
-            storage_buckets=self.discover_storage_buckets(),
-            firestore_collections=self.discover_firestore_collections(),
-            bigquery_datasets=self.discover_bigquery_datasets(),
-            vertex_models=self.discover_vertex_models(),
+            services=services,
+            service_resources=service_resources
         )
         
         self._resources = resources
@@ -332,37 +313,38 @@ class GCPDiscovery:
         logger.info("=" * 80)
         logger.info("DISCOVERY COMPLETE")
         logger.info(f"Project: {resources.project.project_id}")
-        logger.info(f"Services: {len([s for s in resources.services if s.enabled])}")
-        logger.info(f"Secrets: {len(resources.secrets)}")
-        logger.info(f"Storage Buckets: {len(resources.storage_buckets)}")
-        logger.info(f"Firestore Collections: {len(resources.firestore_collections)}")
-        logger.info(f"BigQuery Datasets: {len(resources.bigquery_datasets)}")
-        logger.info(f"Vertex AI Models: {len(resources.vertex_models)}")
+        logger.info(f"Enabled Services: {len([s for s in resources.services if s.enabled])}")
+        logger.info(f"Services with Resources: {len(resources.service_resources)}")
+        
+        # Log resource counts dynamically
+        for service_name, service_data in resources.service_resources.items():
+            service_key = service_name.split('.')[0]
+            logger.info(
+                f"  {service_key}: {service_data.get('count', 0)} "
+                f"{service_data.get('type', 'resources')}"
+            )
+        
         logger.info("=" * 80)
         
         return resources
     
-    def get_secret(self, secret_id: str, version: str = "latest") -> Optional[str]:
-        """Get secret value from Secret Manager.
+    def get_service_resources(self, service_pattern: str) -> Optional[Dict[str, Any]]:
+        """Get discovered resources for a service.
         
         Args:
-            secret_id: Secret ID
-            version: Secret version (default: "latest")
+            service_pattern: Service pattern to search for (e.g., 'secretmanager', 'storage')
             
         Returns:
-            Secret value or None if not found
+            Service resources if found
         """
-        project = self.discover_project()
+        if not self._resources:
+            self.discover_all()
         
-        try:
-            client = secretmanager.SecretManagerServiceClient(credentials=self.credentials)
-            name = f"projects/{project.project_id}/secrets/{secret_id}/versions/{version}"
-            response = client.access_secret_version(request={"name": name})
-            return response.payload.data.decode("UTF-8")
+        for service_name, resources in self._resources.service_resources.items():
+            if service_pattern.lower() in service_name.lower():
+                return resources
         
-        except Exception as e:
-            logger.error(f"Could not access secret {secret_id}: {e}")
-            return None
+        return None
 
 
 # Global discovery instance
