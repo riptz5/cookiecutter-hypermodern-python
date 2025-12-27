@@ -64,8 +64,9 @@ pip install nox poetry
 ### Thinking Process
 1. **Understand**: Read `AGENTS.md` and related file context.
 2. **Plan**: Draft a change in your scratchpad or `<thinking>` block.
-3. **Test**: Verify your change locally using `nox`.
-4. **Refine**: If tests fail, fix *before* presenting to the user.
+3. **Implement + Test**: Write code AND tests together (see `.agent/procedures/TESTING_PROCEDURE.md`).
+4. **Validate**: Run the validation checklist BEFORE committing.
+5. **Refine**: If tests fail, fix *before* presenting to the user.
 
 ## Testing & Verification
 We use `nox` to manage all testing and linting sessions.
@@ -112,11 +113,17 @@ Variables defined in `cookiecutter.json`:
 - Use descriptive, imperative titles (e.g., "Add feature X", "Fix bug Y").
 - Squash and merge is the preferred strategy.
 
-## Workflows
+## Workflows & Procedures
+
+### Workflows
 For complex multi-step tasks, refer to the workflows defined in `.agent/workflows`:
 - **/docs**: Build project documentation
 - **/lint**: Lint the codebase using pre-commit
 - **/tests**: Test the cookiecutter template
+
+### Standard Procedures
+For consistent execution of common tasks:
+- **Testing**: `.agent/procedures/TESTING_PROCEDURE.md` - How to write and validate tests (READ THIS FIRST)
 
 ## Validating Templates
 
