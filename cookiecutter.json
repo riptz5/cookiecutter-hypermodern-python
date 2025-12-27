@@ -16,5 +16,7 @@
     "Development Status :: 5 - Production/Stable",
     "Development Status :: 6 - Mature",
     "Development Status :: 7 - Inactive"
-  ]
+  ],
+  "use_langgraph": ["n", "y"],
+  "project_short_description": "A short description of the project."
 }
