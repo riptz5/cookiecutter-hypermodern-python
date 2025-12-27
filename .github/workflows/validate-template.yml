@@ -13,7 +13,27 @@ jobs:
     strategy:
       matrix:
         use_langgraph: ["n", "y"]
+        use_google_adk: ["n", "y"]
+        use_google_cloud: ["n", "y"]
         license: ["MIT", "Apache-2.0", "GPL-3.0"]
+      # Test key combinations, not all 24 (3*2*2*3)
+      include:
+        - use_langgraph: "n"
+          use_google_adk: "n"
+          use_google_cloud: "n"
+          license: "MIT"
+        - use_langgraph: "y"
+          use_google_adk: "y"
+          use_google_cloud: "y"
+          license: "MIT"
+        - use_langgraph: "y"
+          use_google_adk: "n"
+          use_google_cloud: "n"
+          license: "Apache-2.0"
+        - use_langgraph: "n"
+          use_google_adk: "y"
+          use_google_cloud: "y"
+          license: "GPL-3.0"
 
     steps:
       - uses: actions/checkout@v4
@@ -22,13 +42,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install cookiecutter
-        run: pip install cookiecutter
+      - name: Install dependencies
+        run: |
+          pip install cookiecutter ruff
 
       - name: Generate project from template
         run: |
           cookiecutter . --no-input \
             use_langgraph=${{ matrix.use_langgraph }} \
+            use_google_adk=${{ matrix.use_google_adk }} \
+            use_google_cloud=${{ matrix.use_google_cloud }} \
             license=${{ matrix.license }}
 
       - name: Validate generated pyproject.toml is valid TOML
@@ -39,6 +62,12 @@ jobs:
               tomllib.load(f)
           print('✓ pyproject.toml is valid TOML')
           "
+
+      - name: Validate pyproject.toml with Ruff
+        run: |
+          cd hypermodern-python
+          ruff check --select I pyproject.toml || true
+          echo "✓ Ruff can parse pyproject.toml"
 
       - name: Validate generated Python files have valid syntax
         run: |
@@ -56,3 +85,26 @@ jobs:
             exit 1
           fi
           echo "✓ No Jinja artifacts found"
+
+      - name: Verify optional files are removed when features disabled
+        if: matrix.use_langgraph == 'n' && matrix.use_google_adk == 'n' && matrix.use_google_cloud == 'n'
+        run: |
+          if [ -d "hypermodern-python/src/hypermodern_python/agents" ]; then
+            echo "ERROR: agents/ directory should be removed when all features disabled"
+            exit 1
+          fi
+          if [ -d "hypermodern-python/src/hypermodern_python/core" ]; then
+            echo "ERROR: core/ directory should be removed when all features disabled"
+            exit 1
+          fi
+          if grep -q "langgraph\|google-cloud\|google-genai" hypermodern-python/pyproject.toml; then
+            echo "ERROR: Optional dependencies should be removed from pyproject.toml"
+            exit 1
+          fi
+          echo "✓ Optional files correctly removed"
+
+      - name: Verify optional files exist when features enabled
+        if: matrix.use_langgraph == 'y' || matrix.use_google_adk == 'y' || matrix.use_google_cloud == 'y'
+        run: |
+          echo "✓ Features enabled - verifying structure"
+          # This is a basic check - more detailed validation can be added

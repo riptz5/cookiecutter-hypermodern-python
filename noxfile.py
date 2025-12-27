@@ -75,3 +75,46 @@ def dependencies_table(session: Session) -> None:
     """Print the dependencies table."""
     session.install("tomli")
     session.run("python", "tools/dependencies-table.py", external=True)
+
+
+@nox.session(name="resolve-issues")
+def resolve_issues(session: Session) -> None:
+    """Automatically resolve GitHub issues using AI agent."""
+    args = [
+        f"--owner={owner}",
+        f"--repository={repository}",
+        *session.posargs,
+    ]
+    session.install("click", "github3.py")
+    session.run("python", "tools/resolve-issues.py", *args, external=True)
+
+
+@nox.session(name="generate-innovation-issues")
+def generate_innovation_issues(session: Session) -> None:
+    """Generate 120 innovation issues for the repository."""
+    args = ["create-issues", f"--owner={owner}", f"--repository={repository}", *session.posargs]
+    session.install("click", "github3.py")
+    session.run("python", "tools/generate_innovation_issues.py", *args, external=True)
+
+
+@nox.session(name="list-innovation-ideas")
+def list_innovation_ideas(session: Session) -> None:
+    """List all 120 innovation ideas."""
+    session.install("click")
+    session.run("python", "tools/generate_innovation_issues.py", "list-ideas", external=True)
+
+
+@nox.session(name="export-innovation-json")
+def export_innovation_json(session: Session) -> None:
+    """Export innovation ideas as JSON."""
+    args = ["export-json", *session.posargs]
+    session.install("click")
+    session.run("python", "tools/generate_innovation_issues.py", *args, external=True)
+
+
+@nox.session(name="orchestrate-agents")
+def orchestrate_agents(session: Session) -> None:
+    """Orchestrate sub-agents for parallel issue resolution."""
+    args = ["orchestrate-loops", *session.posargs]
+    session.install("click")
+    session.run("python", "tools/agent_orchestrator.py", *args, external=True)
