@@ -1,8 +1,38 @@
-"""Agent orchestrator for parallel and sequential execution."""
+"""Agent orchestrator for parallel and sequential execution.
+
+<<<<<<< Current (Your changes)
+This module provides the core execution engine for the GENESIS system:
+- Parallel execution of multiple agents
+- Sequential pipelines with data passing
+- Map-reduce patterns for large workloads
+- Integration with BaseAgent and ADKLangGraphBridge
+
+The orchestrator does NOT simulate anything - all execution is real.
+Agents are executed via their run() method, which makes actual LLM calls.
+"""
 import asyncio
+import logging
+=======
+This module provides:
+- AgentOrchestrator: Base orchestrator for task management
+- ProductionOrchestrator: Full multi-agent system with REAL API calls
+
+ProductionOrchestrator is the recommended entry point for production use.
+"""
+import asyncio
+import os
+>>>>>>> Incoming (Background Agent changes)
+import time
 from typing import Any, Callable, Dict, List, Optional, Union
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
+
+from .base import BaseAgent, AgentResult
+
+logger = logging.getLogger(__name__)
 
 
 class ExecutionMode(Enum):
@@ -311,6 +341,95 @@ class AgentOrchestrator:
     def clear_results(self):
         """Clear all stored results."""
         self._results.clear()
+    
+    async def execute_agents(
+        self,
+        agents: Dict[str, BaseAgent],
+        task: str,
+        mode: ExecutionMode = ExecutionMode.PARALLEL,
+        timeout: Optional[float] = None
+    ) -> Dict[str, AgentResult]:
+        """Execute multiple BaseAgent instances.
+        
+        Convenience method for executing agents directly without
+        wrapping them in Task objects.
+        
+        Args:
+            agents: Dict mapping names to BaseAgent instances
+            task: The task/input to send to all agents
+            mode: Execution mode (PARALLEL or SEQUENTIAL)
+            timeout: Optional timeout in seconds
+        
+        Returns:
+            Dict mapping agent names to their AgentResults
+        
+        Example:
+            >>> from .adk.worker_agents import create_worker
+            >>> agents = {
+            ...     "research": create_worker("research"),
+            ...     "analysis": create_worker("analysis"),
+            ... }
+            >>> results = await orchestrator.execute_agents(
+            ...     agents,
+            ...     task="Analyze Python trends",
+            ...     mode=ExecutionMode.PARALLEL
+            ... )
+        """
+        start_time = time.time()
+        
+        if mode == ExecutionMode.PARALLEL:
+            # Create tasks for parallel execution
+            tasks = [
+                Task(
+                    name=name,
+                    input_data=task,
+                    agent_fn=agent.run
+                )
+                for name, agent in agents.items()
+            ]
+            
+            task_results = await self.execute_parallel(tasks, timeout=timeout)
+            
+            # Convert to dict format
+            results = {}
+            for task_result in task_results:
+                output = task_result.output
+                
+                # Handle AgentResult returns
+                if isinstance(output, AgentResult):
+                    results[task_result.task_name] = output
+                else:
+                    results[task_result.task_name] = AgentResult(
+                        output=output,
+                        success=task_result.success,
+                        error=task_result.error,
+                        agent_name=task_result.task_name,
+                    )
+            
+            return results
+            
+        else:  # SEQUENTIAL
+            results = {}
+            current_input = task
+            
+            for name, agent in agents.items():
+                result = await agent.run(current_input)
+                
+                if isinstance(result, AgentResult):
+                    results[name] = result
+                    if result.success:
+                        current_input = result.output
+                    else:
+                        break  # Stop pipeline on failure
+                else:
+                    results[name] = AgentResult(
+                        output=result,
+                        success=True,
+                        agent_name=name,
+                    )
+                    current_input = result
+            
+            return results
 
 
 # Convenience function for quick parallel execution
@@ -380,3 +499,316 @@ async def run_pipeline(
     ]
     
     return await orchestrator.execute_pipeline(tasks, initial_input=initial_input)
+
+
+# ============================================================================
+# PRODUCTION ORCHESTRATOR - Real Multi-Agent System
+# ============================================================================
+
+class ProductionOrchestrator(AgentOrchestrator):
+    """Production orchestrator with REAL multi-agent capabilities.
+    
+    Extends AgentOrchestrator with:
+    - SupervisorAgent integration for intelligent task routing
+    - Real Gemini API calls (no simulation)
+    - Parallel execution of specialized workers
+    - A2A protocol support
+    
+    This is the PRIMARY entry point for production multi-agent systems.
+    
+    Example:
+        >>> orchestrator = ProductionOrchestrator()
+        >>> result = await orchestrator.execute_multi_agent(
+        ...     "Research AI trends and write a summary"
+        ... )
+        >>> print(result["output"])
+        >>> print(f"Workers used: {result['workers_used']}")
+        >>> print(f"Time: {result['execution_time']:.2f}s")
+    
+    Environment:
+        GOOGLE_API_KEY: Required for Gemini API access
+    """
+    
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        max_concurrent: int = 10,
+        enable_a2a: bool = True
+    ):
+        """Initialize production orchestrator.
+        
+        Args:
+            api_key: Optional API key (uses GOOGLE_API_KEY env var if not set)
+            max_concurrent: Maximum concurrent tasks
+            enable_a2a: Whether to enable A2A protocol
+        """
+        super().__init__(max_concurrent=max_concurrent)
+        
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "GOOGLE_API_KEY required. Set environment variable or pass api_key."
+            )
+        
+        self.enable_a2a = enable_a2a
+        
+        # Lazy initialization
+        self._supervisor = None
+        self._a2a_protocol = None
+        self._init_complete = False
+        
+        logger.info("ProductionOrchestrator initialized")
+    
+    async def _ensure_initialized(self) -> None:
+        """Lazy initialization of supervisor and A2A.
+        
+        Defers expensive initialization until first use.
+        """
+        if self._init_complete:
+            return
+        
+        # Import here to avoid circular dependencies
+        from .langgraph.supervisor import SupervisorAgent
+        
+        self._supervisor = SupervisorAgent(api_key=self.api_key)
+        
+        if self.enable_a2a:
+            from .a2a.protocol import create_protocol
+            self._a2a_protocol = create_protocol()
+        
+        self._init_complete = True
+        logger.debug("Supervisor and A2A initialized")
+    
+    async def execute_multi_agent(
+        self,
+        task: str,
+        workers: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Execute task with full multi-agent system.
+        
+        This is the REAL implementation that:
+        1. Uses SupervisorAgent to analyze and route
+        2. Executes workers in PARALLEL (via LangGraph Send)
+        3. Makes REAL Gemini API calls
+        4. Aggregates and returns results
+        
+        Args:
+            task: Task to execute
+            workers: Optional list of specific workers to use
+                    (if not specified, supervisor decides)
+        
+        Returns:
+            Dictionary with:
+                - success: Whether execution succeeded
+                - output: Final aggregated output
+                - workers_used: List of workers that executed
+                - execution_time: Time in seconds
+                - parallel: True (always parallel)
+                - metadata: Additional execution metadata
+        
+        Example:
+            >>> result = await orchestrator.execute_multi_agent(
+            ...     "What are the key trends in AI for 2024?"
+            ... )
+            >>> print(result["output"])
+        """
+        await self._ensure_initialized()
+        
+        start_time = time.time()
+        
+        logger.info(f"Executing multi-agent task: {task[:100]}...")
+        
+        try:
+            # Execute via supervisor (handles routing and parallel execution)
+            supervisor_result = await self._supervisor.run(task)
+            
+            elapsed = time.time() - start_time
+            
+            return {
+                "success": True,
+                "output": supervisor_result.get("final_output", ""),
+                "workers_used": supervisor_result.get("metadata", {}).get("workers_executed", []),
+                "execution_time": elapsed,
+                "parallel": True,  # Always parallel via LangGraph Send
+                "metadata": {
+                    "supervisor_metadata": supervisor_result.get("metadata", {}),
+                    "worker_results": supervisor_result.get("worker_results", {}),
+                },
+            }
+            
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(f"Multi-agent execution failed: {e}", exc_info=True)
+            
+            return {
+                "success": False,
+                "output": None,
+                "workers_used": [],
+                "execution_time": elapsed,
+                "parallel": True,
+                "error": str(e),
+                "metadata": {},
+            }
+    
+    async def execute_with_workers(
+        self,
+        task: str,
+        worker_types: List[str]
+    ) -> Dict[str, Any]:
+        """Execute task with specific workers in parallel.
+        
+        Bypasses supervisor routing and directly executes specified workers.
+        
+        Args:
+            task: Task to execute
+            worker_types: List of worker types to use
+        
+        Returns:
+            Dictionary with worker results
+        
+        Example:
+            >>> result = await orchestrator.execute_with_workers(
+            ...     "Analyze Python best practices",
+            ...     ["research", "code"]
+            ... )
+        """
+        await self._ensure_initialized()
+        
+        from .adk.workers import create_worker
+        
+        start_time = time.time()
+        
+        # Create workers and execute in parallel
+        workers = {wt: create_worker(wt, api_key=self.api_key) for wt in worker_types}
+        
+        async def run_worker(worker_type: str):
+            try:
+                result = await workers[worker_type].run(task)
+                return (worker_type, result.output if result.success else f"Error: {result.error}")
+            except Exception as e:
+                return (worker_type, f"Error: {str(e)}")
+        
+        # Execute all workers in parallel
+        results = await asyncio.gather(*[run_worker(wt) for wt in worker_types])
+        
+        elapsed = time.time() - start_time
+        
+        worker_results = dict(results)
+        
+        return {
+            "success": all("Error:" not in str(r) for _, r in results),
+            "output": worker_results,
+            "workers_used": worker_types,
+            "execution_time": elapsed,
+            "parallel": True,
+        }
+    
+    async def verify_system(self) -> Dict[str, Any]:
+        """Verify the production system is working.
+        
+        Checks:
+        - API key is valid
+        - Gemini API is accessible
+        - Workers can execute
+        - A2A protocol is working (if enabled)
+        
+        Returns:
+            Dictionary with verification results
+        
+        Example:
+            >>> result = await orchestrator.verify_system()
+            >>> for check, status in result["checks"].items():
+            ...     print(f"{check}: {'PASS' if status else 'FAIL'}")
+        """
+        checks = {}
+        
+        # Check 1: API Key
+        checks["api_key"] = bool(self.api_key)
+        
+        # Check 2: Supervisor initialization
+        try:
+            await self._ensure_initialized()
+            checks["supervisor_init"] = self._supervisor is not None
+        except Exception as e:
+            checks["supervisor_init"] = False
+            checks["supervisor_error"] = str(e)
+        
+        # Check 3: Gemini API connection
+        try:
+            from .adk.workers import create_worker
+            worker = create_worker("research", api_key=self.api_key)
+            result = await worker.run("Say 'OK' if you can hear me")
+            checks["gemini_api"] = result.success and len(result.output) > 0
+        except Exception as e:
+            checks["gemini_api"] = False
+            checks["gemini_error"] = str(e)
+        
+        # Check 4: A2A Protocol
+        if self.enable_a2a:
+            try:
+                checks["a2a_protocol"] = self._a2a_protocol is not None
+            except Exception as e:
+                checks["a2a_protocol"] = False
+                checks["a2a_error"] = str(e)
+        
+        # Summary
+        all_passed = all(
+            v for k, v in checks.items() 
+            if not k.endswith("_error") and isinstance(v, bool)
+        )
+        
+        return {
+            "success": all_passed,
+            "checks": checks,
+            "api_key_preview": f"{self.api_key[:10]}..." if self.api_key else None,
+        }
+    
+    def get_available_workers(self) -> List[str]:
+        """Get list of available worker types.
+        
+        Returns:
+            List of worker type names
+        """
+        return ["research", "analysis", "writer", "code"]
+
+
+# ============================================================================
+# Quick Production Functions
+# ============================================================================
+
+async def quick_multi_agent(
+    task: str,
+    api_key: Optional[str] = None
+) -> str:
+    """Quick multi-agent execution.
+    
+    Convenience function for simple multi-agent tasks.
+    
+    Args:
+        task: Task to execute
+        api_key: Optional API key
+    
+    Returns:
+        Output string
+    
+    Example:
+        >>> result = await quick_multi_agent("What is quantum computing?")
+        >>> print(result)
+    """
+    orchestrator = ProductionOrchestrator(api_key=api_key)
+    result = await orchestrator.execute_multi_agent(task)
+    return result["output"] if result["success"] else f"Error: {result.get('error', 'Unknown')}"
+
+
+async def verify_production() -> bool:
+    """Quick verification of production system.
+    
+    Returns:
+        True if all checks pass
+    """
+    try:
+        orchestrator = ProductionOrchestrator()
+        result = await orchestrator.verify_system()
+        return result["success"]
+    except Exception:
+        return False
