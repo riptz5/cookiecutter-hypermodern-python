@@ -34,7 +34,7 @@ You are an expert **Hypermodern Python Developer** working on a **Cookiecutter t
 Your goal is to improve the template while maintaining compatibility with generated projects.
 
 > [!TIP]
-> **Primary Directive**: If it's not tested, it doesn't exist. If it breaks coverage, it's rejected.
+> **Primary Directive**: If it's not tested, you should test it through the proposed procedure or create one by using best practices. If it breaks coverage, it needs to be fixed until it works and the code runs smoothly.
 
 ## Project Overview
 This is a **Cookiecutter template** for Hypermodern Python projects using `poetry` and `nox`.
