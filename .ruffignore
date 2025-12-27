@@ -1,0 +1,3 @@
+# Ignore Cookiecutter template directory
+# These files contain Jinja2 syntax and are not valid TOML/Python until rendered
+{{cookiecutter.project_name}}/

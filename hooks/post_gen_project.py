@@ -55,10 +55,23 @@ def remove_optional_files():
 
 
 def replace_block(text: str, start_marker: str, end_marker: str, content: str) -> str:
-    """Replace the text between start and end markers with new content."""
+    """Replace the text between start and end markers with new content.
+    
+    If content is empty, removes the entire block including markers.
+    Otherwise, replaces content between markers.
+    """
+    if start_marker not in text or end_marker not in text:
+        return text
+    
     before, rest = text.split(start_marker, 1)
     block, after = rest.split(end_marker, 1)
-    return before + start_marker + "\n" + (content + "\n" if content else "") + end_marker + after
+    
+    if content:
+        # Replace with content between markers
+        return before + start_marker + "\n" + content + "\n" + end_marker + after
+    else:
+        # Remove entire block including markers
+        return before + after
 
 
 def update_dependency_blocks(options: dict[str, str]) -> None:

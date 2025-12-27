@@ -1,0 +1,8 @@
+# Ruff configuration for the cookiecutter template repository
+# Exclude template directories that contain Jinja2 syntax
+
+[tool.ruff]
+exclude = [
+    "{{cookiecutter.project_name}}/",
+    "hypermodern-python/",  # Generated test project
+]
