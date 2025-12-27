@@ -23,6 +23,10 @@ Changelog = "https://github.com/{{cookiecutter.github_user}}/{{cookiecutter.proj
 [tool.poetry.dependencies]
 python = "^3.10"
 click = ">=8.0.1"
+{%- if cookiecutter.use_langgraph == 'y' %}
+langgraph = ">=1.0.0"
+langchain-core = ">=0.3.0"
+{%- endif %}
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
