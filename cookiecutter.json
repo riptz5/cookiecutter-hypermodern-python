@@ -18,5 +18,7 @@
     "Development Status :: 7 - Inactive"
   ],
   "use_langgraph": ["n", "y"],
+  "use_google_adk": ["n", "y"],
+  "use_google_cloud": ["n", "y"],
   "project_short_description": "A short description of the project."
 }
