@@ -2,7 +2,7 @@
 """Example: Discover Google Cloud resources automatically.
 
 This script demonstrates automatic discovery of GCP resources using
-Application Default Credentials (ADC).
+Application Default Credentials (ADC) and the plugin-based discovery system.
 
 Setup:
 1. Install gcloud CLI: https://cloud.google.com/sdk/docs/install
@@ -14,8 +14,7 @@ No hardcoded credentials needed!
 """
 import asyncio
 import logging
-from {{cookiecutter.package_name}}.core.gcp_discovery import discover_gcp_resources
-
+from {{cookiecutter.package_name}}.core.gcp_discovery import discover_gcp_resources, GCPDiscovery
 
 # Configure logging
 logging.basicConfig(
@@ -24,10 +23,26 @@ logging.basicConfig(
 )
 
 
+def get_service_resources(resources, service_pattern: str):
+    """Helper to get resources for a service pattern.
+    
+    Args:
+        resources: GCPResources object
+        service_pattern: Pattern to match service name
+        
+    Returns:
+        Dict of resources or None
+    """
+    for service_name, data in resources.service_resources.items():
+        if service_pattern.lower() in service_name.lower():
+            return data
+    return None
+
+
 async def main():
     """Discover and display GCP resources."""
     print("\n" + "=" * 80)
-    print("GOOGLE CLOUD AUTOMATIC DISCOVERY")
+    print("GOOGLE CLOUD AUTOMATIC DISCOVERY (PLUGIN-BASED)")
     print("=" * 80)
     
     try:
@@ -39,46 +54,53 @@ async def main():
         print(f"📍 Region: {resources.project.region}")
         
         # Display enabled services
-        print(f"\n🔧 Enabled Services ({len([s for s in resources.services if s.enabled])}):")
-        for service in sorted(resources.services, key=lambda s: s.display_name):
-            if service.enabled:
-                print(f"  {service}")
+        enabled_services = [s for s in resources.services if s.enabled]
+        print(f"\n🔧 Enabled Services ({len(enabled_services)}):")
+        for service in sorted(enabled_services, key=lambda s: s.display_name)[:15]:
+            print(f"  {service}")
+        if len(enabled_services) > 15:
+            print(f"  ... and {len(enabled_services) - 15} more")
         
-        # Display secrets
-        if resources.secrets:
-            print(f"\n🔐 Secrets ({len(resources.secrets)}):")
-            for secret in resources.secrets[:10]:  # Show first 10
-                print(f"  - {secret}")
-            if len(resources.secrets) > 10:
-                print(f"  ... and {len(resources.secrets) - 10} more")
+        # Display discovered resources dynamically
+        print(f"\n📂 Discovered Resources ({len(resources.service_resources)} services):")
         
-        # Display storage buckets
-        if resources.storage_buckets:
-            print(f"\n🪣 Storage Buckets ({len(resources.storage_buckets)}):")
-            for bucket in resources.storage_buckets[:10]:
-                print(f"  - {bucket}")
-            if len(resources.storage_buckets) > 10:
-                print(f"  ... and {len(resources.storage_buckets) - 10} more")
-        
-        # Display Firestore collections
-        if resources.firestore_collections:
-            print(f"\n🔥 Firestore Collections ({len(resources.firestore_collections)}):")
-            for collection in resources.firestore_collections:
-                print(f"  - {collection}")
-        
-        # Display BigQuery datasets
-        if resources.bigquery_datasets:
-            print(f"\n📊 BigQuery Datasets ({len(resources.bigquery_datasets)}):")
-            for dataset in resources.bigquery_datasets:
-                print(f"  - {dataset}")
-        
-        # Display Vertex AI models
-        if resources.vertex_models:
-            print(f"\n🤖 Vertex AI Models ({len(resources.vertex_models)}):")
-            for model in resources.vertex_models[:5]:
-                print(f"  - {model}")
-            if len(resources.vertex_models) > 5:
-                print(f"  ... and {len(resources.vertex_models) - 5} more")
+        for service_name, data in resources.service_resources.items():
+            # Extract clean service name
+            service_key = service_name.split('.')[-1].replace('.googleapis.com', '')
+            resource_type = data.get('type', 'resources')
+            count = data.get('count', 0)
+            
+            # Get emoji based on service
+            emoji_map = {
+                'secret': '🔐',
+                'storage': '🪣',
+                'firestore': '🔥',
+                'bigquery': '📊',
+                'vertex': '🤖',
+                'compute': '🖥️',
+                'run': '🏃',
+                'pubsub': '📨',
+                'spanner': '🗄️',
+            }
+            emoji = '📁'
+            for pattern, e in emoji_map.items():
+                if pattern in service_key.lower():
+                    emoji = e
+                    break
+            
+            print(f"\n  {emoji} {service_key.title()} ({count} {resource_type}):")
+            
+            # Show resource items (limited)
+            items = data.get('resources', [])
+            for item in items[:5]:
+                if isinstance(item, dict):
+                    name = item.get('name', item.get('id', str(item)))
+                else:
+                    name = str(item)
+                print(f"     - {name}")
+            
+            if len(items) > 5:
+                print(f"     ... and {len(items) - 5} more")
         
         # Summary
         print("\n" + "=" * 80)
@@ -86,14 +108,37 @@ async def main():
         print("=" * 80)
         summary = resources.to_dict()
         for key, value in summary.items():
-            print(f"{key}: {value}")
+            if isinstance(value, list):
+                print(f"{key}: [{len(value)} items]")
+            else:
+                print(f"{key}: {value}")
         
         print("\n✅ Discovery complete!")
         print("\nNext steps:")
         print("1. Use these resources in your agents")
-        print("2. Access secrets with: discovery.get_secret('secret-id')")
-        print("3. Connect to databases automatically")
+        print("2. Access resources via: discovery.get_service_resources('secretmanager')")
+        print("3. Add custom plugins for new services")
         print("4. Deploy to Cloud Run with zero config")
+        
+        # Show usage example
+        print("\n" + "-" * 40)
+        print("Usage Example:")
+        print("-" * 40)
+        print("""
+>>> from {{cookiecutter.package_name}}.core.gcp_discovery import GCPDiscovery
+>>> 
+>>> discovery = GCPDiscovery()
+>>> resources = discovery.discover_all()
+>>> 
+>>> # Get specific service resources
+>>> secrets = discovery.get_service_resources('secretmanager')
+>>> if secrets:
+...     print(f"Found {secrets['count']} secrets")
+>>> 
+>>> # Iterate all services
+>>> for service, data in resources.service_resources.items():
+...     print(f"{service}: {data['count']} {data['type']}")
+""")
         
     except Exception as e:
         print(f"\n❌ Error: {e}")
@@ -102,6 +147,9 @@ async def main():
         print("2. Run: gcloud config set project YOUR_PROJECT_ID")
         print("3. Enable required APIs in Cloud Console")
         print("4. Check IAM permissions")
+        
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
