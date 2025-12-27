@@ -1,0 +1,28 @@
+# Agent Configuration for {{cookiecutter.friendly_name}}
+# Machine-readable config for AI agents
+
+project:
+  type: python
+  name: "{{cookiecutter.project_name}}"
+  package: "{{cookiecutter.package_name}}"
+  src_dir: "src/{{cookiecutter.package_name}}"
+  tests_dir: "tests"
+
+commands:
+  test: "nox -s tests"
+  lint: "nox -s lint"
+  full_check: "nox"
+  docs: "nox -s docs"
+
+policies:
+  coverage_min: 100
+  python_min: "3.10"
+
+agent_frameworks:
+  langgraph: false
+  google_adk: false
+  enable_bridge: false
+
+protected_paths:
+  - ".github/workflows"
+  - "pyproject.toml"

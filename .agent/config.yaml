@@ -1,0 +1,19 @@
+# Agent Configuration for Cookiecutter Template
+# This file helps AI agents understand the template structure
+
+template:
+  type: cookiecutter
+  name: cookiecutter-hypermodern-python
+  
+structure:
+  template_dir: "{{cookiecutter.project_name}}"
+  jinja_warning: "DO NOT simplify {{cookiecutter.*}} expressions"
+
+commands:
+  docs: "nox -s docs"
+  linkcheck: "nox -s linkcheck"
+  dependencies_table: "nox -s dependencies-table"
+
+protected_paths:
+  - ".github/workflows"
+  - "tools/"
