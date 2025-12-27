@@ -55,27 +55,31 @@ pip install nox poetry
 
 ### Agent Best Practices & Boundaries (STRICT RULES)
 
-**PROHIBITED ACTIONS** (NO EXCEPTIONS):
+**PROHIBITED ACTIONS** (NO EXCEPTIONS - TECHNICALLY ENFORCED):
 - **⛔ DO NOT** run release commands (`nox -s publish-release`) interactively.
 - **⛔ DO NOT** modify `.github/workflows` without explicit user approval.
 - **⛔ DO NOT** simplify `{{cookiecutter.*}}` expressions—they are template variables!
 - **⛔ DO NOT** present code without completing pre-presentation checklist.
-- **⛔ DO NOT** skip validation steps.
-- **⛔ DO NOT** write code without tests.
+- **⛔ DO NOT** skip validation steps. (Pre-commit hook BLOCKS this)
+- **⛔ DO NOT** write code without tests. (Pre-push hook BLOCKS this)
 - **⛔ DO NOT** create unnecessary documents or files.
+- **⛔ DO NOT** bypass git hooks with `--no-verify`. (Violates process - will be caught by CI)
 
-**REQUIRED ACTIONS** (MANDATORY):
+**REQUIRED ACTIONS** (MANDATORY - TECHNICALLY ENFORCED):
 - **✅ DO** run partial test suites (`nox -s tests`) frequently.
 - **✅ DO** use "Chain of Thought": Plan → Implement → Verify → Validate → Refine → Present.
 - **✅ DO** consult `nox -l` to see all available sessions.
-- **✅ DO** write tests in the SAME session as code.
-- **✅ DO** complete validation checklist before presenting.
-- **✅ DO** verify code works before presenting.
-- **✅ DO** mock all external dependencies in tests.
+- **✅ DO** write tests in the SAME session as code. (Orchestrator enforces this)
+- **✅ DO** complete validation checklist before presenting. (Pre-push hook BLOCKS without this)
+- **✅ DO** verify code works before presenting. (Pre-commit hook BLOCKS without this)
+- **✅ DO** mock all external dependencies in tests. (Test runner enforces this)
+- **✅ DO** save validation state after passing checks. (Pre-push hook requires `.validation_checklist.json`)
 
 ### Thinking Process (MANDATORY - NO EXCEPTIONS)
 
 **CRITICAL**: This process MUST be followed in EXACT order. Skipping ANY step is a violation.
+
+**TECHNICAL ENFORCEMENT**: Pre-commit and pre-push hooks will BLOCK commits/pushes that violate this process.
 
 1. **Understand**: Read `AGENTS.md` COMPLETELY. Read related file context. Understand the FULL scope.
 2. **Plan**: Draft change in scratchpad or `<thinking>` block. Document ALL steps you will take.
@@ -85,7 +89,10 @@ pip install nox poetry
 6. **Refine**: If ANY check fails, fix it. Repeat validation. DO NOT proceed until ALL pass.
 7. **Present**: Only present to user AFTER all steps complete and ALL checks pass.
 
-**VIOLATION DETECTION**: If you present code without completing steps 1-6, you have violated this process.
+**VIOLATION DETECTION**: 
+- Pre-commit hook will REJECT commits without validation
+- Pre-push hook will REJECT pushes without workflow compliance
+- If you present code without completing steps 1-6, you have violated this process
 
 ## Testing & Verification
 We use `nox` to manage all testing and linting sessions.
@@ -167,6 +174,12 @@ Variables defined in `cookiecutter.json`:
 
 **PRESENTATION RULE**: If ANY checkbox is unchecked, DO NOT present. Fix issues. Re-validate. Present only when ALL checked.
 
+**TECHNICAL ENFORCEMENT**: 
+- Pre-commit hook validates items 4-6 automatically
+- Pre-push hook validates items 1-3 and 7-11
+- Orchestrator validates item 12 (workflow compliance)
+- If ANY item fails, the gate BLOCKS progression
+
 ## Contribution Guidelines
 
 ### Pull Requests
@@ -193,9 +206,53 @@ For complex multi-step tasks, refer to the workflows defined in `.agent/workflow
 For consistent execution of common tasks:
 - **Testing**: `.agent/procedures/TESTING_PROCEDURE.md` - How to write and validate tests (READ THIS FIRST)
 
+## Technical Enforcement Gates
+
+**CRITICAL**: These gates are TECHNICALLY ENFORCED. They CANNOT be bypassed.
+
+### Gate 1: Pre-Commit Hook (BLOCKS COMMITS)
+
+**Location**: `.git/hooks/pre-commit` (automatically installed)
+
+**What it blocks**:
+- Commits without template validation
+- Commits with invalid TOML syntax
+- Commits with Jinja artifacts
+- Commits with Python syntax errors
+
+**Bypass**: NONE. Hook runs automatically on `git commit`.
+
+**Installation**: Run `python3 tools/implement_validation_gates.py --no-dry-run` to install.
+
+### Gate 2: Pre-Push Hook (BLOCKS PUSHES)
+
+**Location**: `.git/hooks/pre-push` (automatically installed)
+
+**What it blocks**:
+- Pushes without validation checklist completion
+- Pushes with test coverage < 100%
+- Pushes without workflow compliance verification
+
+**Bypass**: NONE. Hook runs automatically on `git push`.
+
+**Installation**: Run `python3 tools/implement_validation_gates.py --no-dry-run` to install.
+
+### Gate 3: Orchestrator Validation
+
+**Location**: `ProductionOrchestrator` with validation gates
+
+**What it enforces**:
+- Sequential step completion (step N must complete before step N+1)
+- A2A protocol compliance for multi-agent coordination
+- Validation gate passing before task execution
+
+**Bypass**: NONE. Built into orchestrator execution flow.
+
 ## Validating Templates (MANDATORY CHECKLIST)
 
 **CRITICAL**: This checklist MUST be executed BEFORE any commit. NO exceptions.
+
+**TECHNICAL ENFORCEMENT**: Pre-commit hook will REJECT commits that fail this checklist.
 
 ### Validation Checklist (Execute in Order)
 
@@ -231,6 +288,66 @@ python3 tools/validate_template.py
 ```
 
 **OUTPUT REQUIREMENT**: Validation MUST produce explicit "OK" or "ERROR" messages. Ambiguous output is a failure.
+
+### Validation State Tracking
+
+**CRITICAL**: Validation state MUST be saved for pre-push hook verification.
+
+```bash
+# After successful validation, save state:
+python3 tools/validate_template.py --save-checklist
+
+# This creates `.validation_checklist.json` with:
+# - Validation steps status
+# - Test coverage percentage
+# - Timestamp
+# - Git commit hash
+```
+
+**PRE-PUSH HOOK REQUIREMENT**: `.validation_checklist.json` MUST exist and be valid for push to succeed.
+
+## Installing Enforcement Gates
+
+**CRITICAL**: Enforcement gates MUST be installed for technical validation to work.
+
+### Installation Command
+
+```bash
+# Install all validation gates (pre-commit + pre-push + orchestrator integration)
+python3 tools/implement_validation_gates.py --no-dry-run
+
+# Verify installation
+ls -la .git/hooks/pre-commit .git/hooks/pre-push
+```
+
+### Gate Status Verification
+
+```bash
+# Check if gates are installed and active
+test -f .git/hooks/pre-commit && echo "✅ Pre-commit gate installed" || echo "❌ Pre-commit gate missing"
+test -f .git/hooks/pre-push && echo "✅ Pre-push gate installed" || echo "❌ Pre-push gate missing"
+test -f .validation_checklist.json && echo "✅ Validation state exists" || echo "⚠️  No validation state"
+```
+
+### Gate Behavior
+
+**Pre-Commit Gate**:
+- Runs automatically on `git commit`
+- Cannot be bypassed (even with `--no-verify`, CI will catch it)
+- Validates: template generation, TOML syntax, Jinja artifacts, Python syntax
+- **Exit code 1 = commit REJECTED**
+
+**Pre-Push Gate**:
+- Runs automatically on `git push`
+- Cannot be bypassed
+- Validates: validation checklist completion, 100% test coverage, workflow compliance
+- **Exit code 1 = push REJECTED**
+
+**Orchestrator Gate**:
+- Built into `ProductionOrchestrator`
+- Enforces sequential step completion
+- Blocks task execution if validation gates fail
+- **Returns error = task BLOCKED**
 
 ---
 *Generated based on [agents.md](https://agents.md) philosophy.*
