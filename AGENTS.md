@@ -118,5 +118,23 @@ For complex multi-step tasks, refer to the workflows defined in `.agent/workflow
 - **/lint**: Lint the codebase using pre-commit
 - **/tests**: Test the cookiecutter template
 
+## Validating Templates
+
+Before committing changes to template files, validate locally:
+
+```bash
+# Generate a test project
+cookiecutter . --no-input
+
+# Verify TOML is valid
+python -c "import tomllib; tomllib.load(open('hypermodern-python/pyproject.toml', 'rb'))"
+
+# Verify Python syntax
+find hypermodern-python/src -name "*.py" -exec python -m py_compile {} \;
+
+# Check for unrendered Jinja
+grep -r "{{cookiecutter" hypermodern-python/ && echo "ERROR" || echo "OK"
+```
+
 ---
 *Generated based on [agents.md](https://agents.md) philosophy.*
