@@ -1,22 +1,21 @@
-"""Google Cloud integration module.
+{%- if cookiecutter.use_google_cloud == 'y' %}
+"""Google Cloud infrastructure modules.
 
-This module provides integration with Google Cloud services:
-- Firestore for persistent memory
-- Cloud Storage for artifacts
-- Pub/Sub for event-driven architecture
-- Cloud Scheduler for automated cycles
-- Vertex AI for advanced ML capabilities
+Este paquete contiene clientes y utilidades para interactuar
+con servicios de Google Cloud Platform.
 
-All services use the GCP discovery system for automatic configuration.
+Modules:
+    firestore: Cliente Firestore para persistencia
+    run: Deployer para Cloud Run
+    pubsub: Cliente Pub/Sub para mensajeria
 """
-from .memory_store import (
-    MemoryStore,
-    MemoryEntry,
-    get_memory_store,
-)
+from .firestore import FirestoreClient
+from .run import CloudRunDeployer
+from .pubsub import PubSubClient
 
 __all__ = [
-    "MemoryStore",
-    "MemoryEntry",
-    "get_memory_store",
+    "FirestoreClient",
+    "CloudRunDeployer",
+    "PubSubClient",
 ]
+{%- endif %}

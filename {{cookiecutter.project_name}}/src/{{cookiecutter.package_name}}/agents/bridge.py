@@ -1,405 +1,346 @@
 {%- if cookiecutter.use_google_adk == 'y' and cookiecutter.use_langgraph == 'y' %}
-"""Bridge between Google ADK and LangGraph.
+"""ADK-LangGraph Bridge - Conecta agentes ADK con LangGraph.
 
-This module provides seamless integration between:
-- Google ADK agents (adk/)
-- LangGraph workflows (langgraph/)
-- A2A protocol for communication
-
-Purpose:
-- Wrap ADK agents as LangGraph nodes
-- Wrap LangGraph graphs as ADK-compatible agents
-- Unify interfaces for orchestration
-
-Design Principle: ZERO COUPLING
-- Each framework can operate independently
-- Bridge provides optional integration layer
+Este modulo proporciona utilidades para integrar agentes
+GoogleADK como nodos en grafos de LangGraph, permitiendo
+orquestacion sofisticada de multi-agentes.
 """
 import asyncio
-import os
-from typing import Any, Callable, Dict, List, Optional, Union
-from dataclasses import dataclass
 import logging
-
-# ADK imports
-from .adk.agent import GoogleADKAgent, ADKConfig
-from .adk.workers import WorkerAgent, create_worker
-
-# LangGraph imports
-from .langgraph.state import AgentState
-
-# A2A imports
-from .a2a.protocol import A2AProtocol, A2AMessage, A2AMessageType, AgentCard, create_protocol
-
-# Base imports
-from .base import BaseAgent, AgentContext, AgentResult
-
-# LangChain imports (for LLM compatibility)
-try:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
-    HAS_LANGCHAIN = True
-except ImportError:
-    HAS_LANGCHAIN = False
+import os
+from typing import Callable, Dict, Any, List, Optional
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class BridgeConfig:
-    """Configuration for the ADK-LangGraph bridge.
+    """Configuracion del bridge.
     
     Attributes:
-        model: Gemini model to use
-        api_key: API key (uses env var if not set)
-        temperature: Sampling temperature
-        enable_a2a: Whether to enable A2A protocol
+        api_key: API key de Google
+        default_model: Modelo por defecto
+        max_parallel: Max agentes en paralelo
+        timeout_seconds: Timeout por agente
     """
-    model: str = "gemini-2.0-flash-exp"
     api_key: Optional[str] = None
-    temperature: float = 0.7
-    enable_a2a: bool = True
+    default_model: str = "gemini-2.0-flash-exp"
+    max_parallel: int = 5
+    timeout_seconds: float = 120.0
     
     def __post_init__(self):
-        """Set API key from environment if not provided."""
-        if not self.api_key:
+        if self.api_key is None:
             self.api_key = os.getenv("GOOGLE_API_KEY")
 
 
 class ADKLangGraphBridge:
-    """Bridge between Google ADK and LangGraph frameworks.
+    """Bridge entre Google ADK y LangGraph.
     
-    Provides:
-    - ADK agents as LangGraph nodes
-    - LangChain-compatible LLM from ADK config
-    - Unified interface for both frameworks
-    - A2A protocol integration
+    Permite usar agentes ADK como nodos en grafos LangGraph,
+    facilitando la construccion de sistemas multi-agente
+    con orquestacion sofisticada.
     
     Example:
         >>> bridge = ADKLangGraphBridge()
         >>> 
-        >>> # Use as LangChain LLM
-        >>> llm = bridge.get_langchain_llm()
-        >>> response = await llm.ainvoke([HumanMessage(content="Hello")])
+        >>> # Crear nodo desde agente ADK
+        >>> agent = GoogleADKAgent(config)
+        >>> node_fn = bridge.wrap_adk_agent(agent)
         >>> 
-        >>> # Wrap ADK agent as LangGraph node
-        >>> research_agent = create_worker("research")
-        >>> node_fn = bridge.wrap_adk_agent(research_agent)
-        >>> 
-        >>> # Use in LangGraph
-        >>> builder.add_node("research", node_fn)
+        >>> # Usar en grafo LangGraph
+        >>> graph = StateGraph(AgentState)
+        >>> graph.add_node("researcher", node_fn)
     """
     
     def __init__(self, config: Optional[BridgeConfig] = None):
-        """Initialize bridge.
+        """Inicializa el bridge.
         
         Args:
-            config: Bridge configuration
+            config: Configuracion del bridge
         """
         self.config = config or BridgeConfig()
-        self._llm: Optional[ChatGoogleGenerativeAI] = None
-        self._protocol: Optional[A2AProtocol] = None
-        
-        if not self.config.api_key:
-            raise ValueError(
-                "GOOGLE_API_KEY required. Set environment variable or pass api_key."
-            )
-        
-        # Initialize A2A if enabled
-        if self.config.enable_a2a:
-            self._protocol = create_protocol()
-        
-        logger.info(f"Bridge initialized with model {self.config.model}")
+        self._wrapped_agents: Dict[str, Callable] = {}
+        logger.info("ADKLangGraphBridge initialized")
     
-    def get_langchain_llm(self) -> "ChatGoogleGenerativeAI":
-        """Get LangChain-compatible LLM.
-        
-        Creates a ChatGoogleGenerativeAI instance configured with
-        the same settings as the ADK agents.
-        
-        Returns:
-            LangChain LLM instance
-            
-        Raises:
-            ImportError: If langchain-google-genai not installed
-        """
-        if not HAS_LANGCHAIN:
-            raise ImportError(
-                "langchain-google-genai not installed. "
-                "Install with: pip install langchain-google-genai"
-            )
-        
-        if self._llm is None:
-            self._llm = ChatGoogleGenerativeAI(
-                model=self.config.model,
-                google_api_key=self.config.api_key,
-                temperature=self.config.temperature,
-            )
-        
-        return self._llm
-    
-    def wrap_adk_agent(self, agent: Union[GoogleADKAgent, WorkerAgent]) -> Callable:
-        """Wrap ADK agent as LangGraph node function.
-        
-        Creates an async function compatible with LangGraph's
-        add_node() method.
+    def wrap_adk_agent(
+        self,
+        agent,
+        state_key: str = "messages",
+        output_key: str = "agent_response",
+    ) -> Callable:
+        """Envuelve un agente ADK como nodo LangGraph.
         
         Args:
-            agent: ADK agent to wrap
+            agent: Instancia de GoogleADKAgent
+            state_key: Key en el state para obtener el prompt
+            output_key: Key donde guardar la respuesta
             
         Returns:
-            Async function for LangGraph node
-            
-        Example:
-            >>> agent = create_worker("research")
-            >>> node_fn = bridge.wrap_adk_agent(agent)
-            >>> builder.add_node("research", node_fn)
+            Funcion async compatible con LangGraph
         """
-        async def node_fn(state: AgentState) -> Dict[str, Any]:
-            """LangGraph node function wrapping ADK agent."""
-            # Extract prompt from state
-            messages = state.get("messages", [])
-            
-            if messages:
-                # Get last message content
-                last_msg = messages[-1]
-                if hasattr(last_msg, 'content'):
-                    prompt = last_msg.content
-                elif isinstance(last_msg, dict):
-                    prompt = last_msg.get('content', str(last_msg))
-                else:
-                    prompt = str(last_msg)
-            else:
-                # Fall back to task from context
-                prompt = state.get("context", {}).get("task", "")
+        async def node_fn(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Nodo LangGraph que ejecuta el agente ADK."""
+            # Extraer prompt del state
+            prompt = self._extract_prompt(state, state_key)
             
             if not prompt:
-                return {"messages": [], "context": {"error": "No prompt provided"}}
+                logger.warning("No prompt found in state")
+                return {output_key: "No prompt provided", "error": True}
             
-            # Execute ADK agent (REAL API call)
-            logger.debug(f"Executing ADK agent: {prompt[:50]}...")
-            
-            if isinstance(agent, WorkerAgent):
-                result = await agent.run(prompt)
-                response = result.output if result.success else f"Error: {result.error}"
-            else:
-                response = await agent.run(prompt)
-            
-            # Return state update
-            return {
-                "messages": [AIMessage(content=response)] if HAS_LANGCHAIN else [{"role": "assistant", "content": response}],
-                "context": {
-                    "last_agent": getattr(agent, 'name', agent.__class__.__name__),
-                    "success": True,
-                },
-            }
+            try:
+                # Ejecutar agente con timeout
+                response = await asyncio.wait_for(
+                    agent.run(prompt),
+                    timeout=self.config.timeout_seconds,
+                )
+                
+                return {
+                    output_key: response,
+                    "agent_name": getattr(agent, "name", "unknown"),
+                    "error": False,
+                }
+                
+            except asyncio.TimeoutError:
+                logger.error(f"Agent timeout after {self.config.timeout_seconds}s")
+                return {output_key: "Agent timeout", "error": True}
+            except Exception as e:
+                logger.error(f"Agent error: {e}")
+                return {output_key: str(e), "error": True}
         
         return node_fn
     
-    def wrap_adk_agent_with_a2a(
+    def wrap_multiple(
         self,
-        agent: Union[GoogleADKAgent, WorkerAgent],
-        agent_id: str
-    ) -> Callable:
-        """Wrap ADK agent with A2A protocol support.
-        
-        Creates a node function that:
-        - Registers agent with A2A protocol
-        - Handles A2A messages
-        - Can be discovered by other agents
+        agents: Dict[str, Any],
+        state_key: str = "task",
+    ) -> Dict[str, Callable]:
+        """Envuelve multiples agentes como nodos.
         
         Args:
-            agent: ADK agent to wrap
-            agent_id: Unique agent identifier
+            agents: Dict de nombre -> agente
+            state_key: Key del state para el prompt
             
         Returns:
-            Async function for LangGraph node with A2A
+            Dict de nombre -> node function
         """
-        if not self._protocol:
-            raise ValueError("A2A not enabled. Set enable_a2a=True in config.")
+        nodes = {}
+        for name, agent in agents.items():
+            nodes[name] = self.wrap_adk_agent(
+                agent,
+                state_key=state_key,
+                output_key=f"{name}_response",
+            )
+            self._wrapped_agents[name] = nodes[name]
         
-        # Register agent card
-        capabilities = getattr(agent, 'capabilities', ['general'])
-        card = AgentCard(
-            agent_id=agent_id,
-            name=getattr(agent, 'name', agent.__class__.__name__),
-            capabilities=capabilities,
-        )
-        self._protocol.register_agent(card)
-        
-        # Create wrapped node function
-        base_fn = self.wrap_adk_agent(agent)
-        
-        async def a2a_node_fn(state: AgentState) -> Dict[str, Any]:
-            """Node function with A2A support."""
-            # Check for incoming A2A message
-            message = await self._protocol.receive(agent_id, timeout=0.1)
-            
-            if message and message.type == A2AMessageType.TASK_REQUEST:
-                # Process A2A request
-                task = message.payload.get("task", "")
-                state = {**state, "messages": [{"content": task}]}
-                
-                # Execute
-                result = await base_fn(state)
-                
-                # Send response via A2A
-                response_msg = message.create_response({
-                    "result": result.get("messages", [{}])[-1].get("content", "") if result.get("messages") else "",
-                    "success": result.get("context", {}).get("success", True),
-                })
-                await self._protocol.send(response_msg)
-                
-                return result
-            
-            # Normal execution without A2A
-            return await base_fn(state)
-        
-        return a2a_node_fn
+        logger.info(f"Wrapped {len(nodes)} agents as LangGraph nodes")
+        return nodes
     
     def create_parallel_node(
         self,
-        agents: Dict[str, Union[GoogleADKAgent, WorkerAgent]]
+        agents: Dict[str, Any],
+        state_key: str = "task",
     ) -> Callable:
-        """Create a node that executes multiple agents in parallel.
+        """Crea un nodo que ejecuta multiples agentes en paralelo.
         
         Args:
-            agents: Dictionary of agent_name -> agent
+            agents: Dict de nombre -> agente
+            state_key: Key del state para el prompt
             
         Returns:
-            Async function that executes all agents in parallel
-            
-        Example:
-            >>> agents = {
-            ...     "research": create_worker("research"),
-            ...     "analysis": create_worker("analysis"),
-            ... }
-            >>> parallel_node = bridge.create_parallel_node(agents)
-            >>> builder.add_node("parallel_work", parallel_node)
+            Funcion async que ejecuta todos en paralelo
         """
-        async def parallel_node_fn(state: AgentState) -> Dict[str, Any]:
-            """Execute multiple agents in parallel."""
-            # Extract prompt from state
-            messages = state.get("messages", [])
-            prompt = ""
-            if messages:
-                last_msg = messages[-1]
-                prompt = last_msg.content if hasattr(last_msg, 'content') else str(last_msg)
+        async def parallel_node(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Ejecuta todos los agentes en paralelo."""
+            prompt = self._extract_prompt(state, state_key)
             
-            # Execute all agents in parallel
+            if not prompt:
+                return {"results": {}, "error": True}
+            
+            # Crear tareas para todos los agentes
             tasks = {}
             for name, agent in agents.items():
-                if isinstance(agent, WorkerAgent):
-                    tasks[name] = agent.run(prompt)
-                else:
-                    tasks[name] = agent.run(prompt)
+                tasks[name] = asyncio.create_task(
+                    self._run_with_timeout(agent, prompt)
+                )
             
-            # Gather results
-            results_list = await asyncio.gather(*tasks.values(), return_exceptions=True)
-            results = dict(zip(tasks.keys(), results_list))
-            
-            # Process results
-            outputs = {}
-            for name, result in results.items():
-                if isinstance(result, Exception):
-                    outputs[name] = f"Error: {str(result)}"
-                elif isinstance(result, AgentResult):
-                    outputs[name] = result.output if result.success else f"Error: {result.error}"
-                else:
-                    outputs[name] = result
+            # Esperar todos
+            results = {}
+            for name, task in tasks.items():
+                try:
+                    results[name] = await task
+                except Exception as e:
+                    results[name] = f"Error: {e}"
             
             return {
-                "messages": [{"role": "assistant", "content": str(outputs)}],
-                "context": {
-                    "parallel_results": outputs,
-                    "agents_executed": list(agents.keys()),
-                },
+                "results": results,
+                "agents_run": list(results.keys()),
+                "error": False,
             }
         
-        return parallel_node_fn
+        return parallel_node
     
-    async def invoke_langchain(
+    def create_sequential_node(
         self,
-        prompt: str,
-        **kwargs
-    ) -> str:
-        """Invoke LangChain LLM directly.
+        agents: List[Any],
+        state_key: str = "task",
+    ) -> Callable:
+        """Crea un nodo que ejecuta agentes secuencialmente.
+        
+        Cada agente recibe el output del anterior.
         
         Args:
-            prompt: Prompt text
-            **kwargs: Additional arguments for LLM
+            agents: Lista ordenada de agentes
+            state_key: Key del state para el prompt inicial
             
         Returns:
-            LLM response text
+            Funcion async que ejecuta en secuencia
         """
-        llm = self.get_langchain_llm()
-        messages = [HumanMessage(content=prompt)]
-        response = await llm.ainvoke(messages, **kwargs)
-        return response.content
-    
-    def get_protocol(self) -> Optional[A2AProtocol]:
-        """Get A2A protocol instance.
+        async def sequential_node(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Ejecuta agentes en secuencia."""
+            current_input = self._extract_prompt(state, state_key)
+            results = []
+            
+            for i, agent in enumerate(agents):
+                try:
+                    response = await self._run_with_timeout(agent, current_input)
+                    results.append(response)
+                    # El output se convierte en input del siguiente
+                    current_input = response
+                except Exception as e:
+                    results.append(f"Error at step {i}: {e}")
+                    break
+            
+            return {
+                "final_output": results[-1] if results else "",
+                "intermediate_results": results,
+                "steps_completed": len(results),
+            }
         
+        return sequential_node
+    
+    def create_router_node(
+        self,
+        agents: Dict[str, Any],
+        router_agent: Any,
+    ) -> Callable:
+        """Crea un nodo que routea tareas a agentes especificos.
+        
+        Args:
+            agents: Dict de nombre -> agente
+            router_agent: Agente que decide a quien routear
+            
         Returns:
-            A2A protocol if enabled
+            Funcion async que routea y ejecuta
         """
-        return self._protocol
+        async def router_node(state: Dict[str, Any]) -> Dict[str, Any]:
+            """Routea tarea al agente apropiado."""
+            task = self._extract_prompt(state, "task")
+            
+            # Pedir al router que decida
+            routing_prompt = f"""Analiza la siguiente tarea y decide que agente debe manejarla.
 
+Agentes disponibles: {list(agents.keys())}
 
-# Convenience functions
+Tarea: {task}
 
-def create_bridge(
-    api_key: Optional[str] = None,
-    model: str = "gemini-2.0-flash-exp",
-    enable_a2a: bool = True
-) -> ADKLangGraphBridge:
-    """Create a configured bridge instance.
-    
-    Args:
-        api_key: Optional API key
-        model: Gemini model to use
-        enable_a2a: Whether to enable A2A protocol
-        
-    Returns:
-        Configured bridge instance
-    """
-    config = BridgeConfig(
-        api_key=api_key,
-        model=model,
-        enable_a2a=enable_a2a,
-    )
-    return ADKLangGraphBridge(config)
-
-
-async def quick_invoke(
-    prompt: str,
-    agent_type: str = "research",
-    api_key: Optional[str] = None
-) -> str:
-    """Quick invocation using bridge.
-    
-    Args:
-        prompt: Prompt text
-        agent_type: Type of worker agent
-        api_key: Optional API key
-        
-    Returns:
-        Agent response
-        
-    Example:
-        >>> response = await quick_invoke("What are AI trends?", "research")
-    """
-    worker = create_worker(agent_type, api_key=api_key)
-    result = await worker.run(prompt)
-    return result.output if result.success else f"Error: {result.error}"
-{%- else %}
-"""Bridge module placeholder.
-
-This module requires both use_google_adk and use_langgraph to be enabled.
+Responde SOLO con el nombre del agente (una palabra).
 """
+            
+            try:
+                router_response = await self._run_with_timeout(router_agent, routing_prompt)
+                selected_agent = router_response.strip().lower()
+                
+                # Buscar agente
+                agent = None
+                for name, a in agents.items():
+                    if name.lower() in selected_agent or selected_agent in name.lower():
+                        agent = a
+                        selected_agent = name
+                        break
+                
+                if agent is None:
+                    # Default al primero
+                    selected_agent = list(agents.keys())[0]
+                    agent = agents[selected_agent]
+                
+                # Ejecutar agente seleccionado
+                result = await self._run_with_timeout(agent, task)
+                
+                return {
+                    "routed_to": selected_agent,
+                    "agent_response": result,
+                    "routing_decision": router_response,
+                }
+                
+            except Exception as e:
+                return {
+                    "error": True,
+                    "message": str(e),
+                }
+        
+        return router_node
+    
+    async def _run_with_timeout(self, agent, prompt: str) -> str:
+        """Ejecuta agente con timeout.
+        
+        Args:
+            agent: Agente a ejecutar
+            prompt: Prompt para el agente
+            
+        Returns:
+            Respuesta del agente
+        """
+        return await asyncio.wait_for(
+            agent.run(prompt),
+            timeout=self.config.timeout_seconds,
+        )
+    
+    def _extract_prompt(self, state: Dict[str, Any], key: str) -> str:
+        """Extrae prompt del state.
+        
+        Args:
+            state: State de LangGraph
+            key: Key a buscar
+            
+        Returns:
+            Prompt como string
+        """
+        value = state.get(key)
+        
+        if isinstance(value, str):
+            return value
+        
+        if isinstance(value, list):
+            # Asumir lista de mensajes, tomar el ultimo
+            if value:
+                last = value[-1]
+                if isinstance(last, dict):
+                    return last.get("content", str(last))
+                return str(last)
+            return ""
+        
+        if isinstance(value, dict):
+            return value.get("content", str(value))
+        
+        return str(value) if value else ""
 
-def create_bridge(*args, **kwargs):
-    raise NotImplementedError(
-        "Bridge requires both use_google_adk=y and use_langgraph=y"
-    )
+
+def create_bridge(api_key: Optional[str] = None) -> ADKLangGraphBridge:
+    """Crea un bridge con configuracion por defecto.
+    
+    Args:
+        api_key: API key de Google (opcional)
+        
+    Returns:
+        ADKLangGraphBridge configurado
+    """
+    config = BridgeConfig(api_key=api_key)
+    return ADKLangGraphBridge(config)
+{%- else %}
+"""A2A/MCP bridge for agent communication.
+
+Este modulo requiere use_google_adk='y' y use_langgraph='y'
+para funcionalidad completa.
+"""
 {%- endif %}

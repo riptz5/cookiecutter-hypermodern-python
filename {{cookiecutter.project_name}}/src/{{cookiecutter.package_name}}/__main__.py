@@ -1,337 +1,341 @@
-"""Command-line interface for {{cookiecutter.friendly_name}}.
-
-Provides commands for:
-- Multi-agent task execution
-- System verification
-- Autopoietic cycle management
-- Individual agent invocation
-
-Examples:
-    # Run multi-agent task
-    $ {{cookiecutter.project_name}} --multi-agent "Research AI trends"
-    
-    # Verify system setup
-    $ {{cookiecutter.project_name}} --verify
-    
-    # Run autopoietic cycle
-    $ {{cookiecutter.project_name}} --autopoiesis
-    
-    # Single agent query
-    $ {{cookiecutter.project_name}} --agent research "What is Python?"
-"""
+"""Command-line interface."""
 import asyncio
-import os
+import logging
 import sys
-from typing import Optional
 
 import click
 
+
+def setup_logging(verbose: bool = False) -> None:
+    """Configure logging based on verbosity."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+
+@click.group()
+@click.version_option()
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
+@click.pass_context
+def main(ctx: click.Context, verbose: bool) -> None:
+    """{{cookiecutter.friendly_name}} - AI-powered multi-agent system."""
+    ctx.ensure_object(dict)
+    ctx.obj["verbose"] = verbose
+    setup_logging(verbose)
+
+
+@main.command()
+@click.pass_context
+def info(ctx: click.Context) -> None:
+    """Show system information."""
+    click.echo("{{cookiecutter.friendly_name}} v{{cookiecutter.version}}")
+    click.echo("=" * 40)
+    
+    # Check available features
+    features = []
+    {%- if cookiecutter.use_google_adk == 'y' %}
+    features.append("Google ADK")
+    {%- endif %}
+    {%- if cookiecutter.use_langgraph == 'y' %}
+    features.append("LangGraph")
+    {%- endif %}
+    {%- if cookiecutter.use_google_cloud == 'y' %}
+    features.append("Google Cloud")
+    {%- endif %}
+    
+    if features:
+        click.echo(f"Features: {', '.join(features)}")
+    else:
+        click.echo("Features: Base configuration")
+
+
 {%- if cookiecutter.use_google_adk == 'y' %}
 
 
-def _run_async(coro):
-    """Run async coroutine in sync context."""
-    try:
-        return asyncio.run(coro)
-    except RuntimeError:
-        # Already in async context
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(coro)
+@main.command()
+@click.argument("prompt")
+@click.option("--model", default="gemini-2.0-flash-exp", help="Model to use")
+@click.pass_context
+def ask(ctx: click.Context, prompt: str, model: str) -> None:
+    """Ask a question using the ADK agent."""
+    async def _ask():
+        from .agents.adk import GoogleADKAgent, ADKConfig
+        
+        config = ADKConfig(model=model)
+        agent = GoogleADKAgent(config)
+        
+        click.echo(f"Asking: {prompt[:50]}...")
+        response = await agent.run(prompt)
+        click.echo("\nResponse:")
+        click.echo("-" * 40)
+        click.echo(response)
+    
+    asyncio.run(_ask())
 
 
-async def _verify_system():
-    """Verify all production systems."""
-    click.echo("=" * 60)
-    click.echo("SYSTEM VERIFICATION")
-    click.echo("=" * 60)
+@main.command()
+@click.argument("task")
+@click.option("--workers", "-w", multiple=True, help="Worker types to use")
+@click.pass_context
+def multi(ctx: click.Context, task: str, workers: tuple) -> None:
+    """Run a task using multiple agents in parallel."""
+    async def _multi():
+        from .agents.factory import AgentFactory, AgentType
+        
+        factory = AgentFactory()
+        
+        # Default workers if none specified
+        if not workers:
+            worker_types = [AgentType.RESEARCH, AgentType.ANALYSIS]
+        else:
+            worker_types = [AgentType(w) for w in workers]
+        
+        click.echo(f"Running task with {len(worker_types)} workers...")
+        
+        # Create workers
+        agents = {}
+        for wt in worker_types:
+            agents[wt.value] = factory.create(f"worker-{wt.value}", wt)
+        
+        # Run in parallel
+        tasks = {
+            name: asyncio.create_task(agent.run(task))
+            for name, agent in agents.items()
+        }
+        
+        results = {}
+        for name, t in tasks.items():
+            try:
+                results[name] = await t
+                click.echo(f"\n[{name.upper()}]")
+                click.echo("-" * 40)
+                click.echo(results[name][:500] + "..." if len(results[name]) > 500 else results[name])
+            except Exception as e:
+                click.echo(f"\n[{name.upper()}] Error: {e}")
+        
+        click.echo(f"\nCompleted {len(results)} worker responses.")
+    
+    asyncio.run(_multi())
+{%- endif %}
+
+
+{%- if cookiecutter.use_google_adk == 'y' and cookiecutter.use_google_cloud == 'y' %}
+
+
+@main.group()
+@click.pass_context
+def genesis(ctx: click.Context) -> None:
+    """GENESIS autopoietic system commands."""
+    pass
+
+
+@genesis.command()
+@click.option("--task", "-t", default=None, help="Specific task to execute")
+@click.pass_context
+def cycle(ctx: click.Context, task: str) -> None:
+    """Run a single GENESIS cycle."""
+    async def _cycle():
+        from .genesis import GenesisCore
+        
+        click.echo("Initializing GENESIS Core...")
+        core = GenesisCore()
+        
+        click.echo("Running cycle...")
+        result = await core.run_cycle(task=task)
+        
+        click.echo("\nCycle Result:")
+        click.echo("-" * 40)
+        click.echo(f"Cycle ID: {result.cycle_id}")
+        click.echo(f"Success: {result.success}")
+        click.echo(f"Actions: {len(result.actions_taken)}")
+        click.echo(f"Duration: {result.duration_ms:.2f}ms")
+        click.echo(f"Evolved: {result.evolved}")
+        
+        if result.errors:
+            click.echo(f"\nErrors ({len(result.errors)}):")
+            for err in result.errors[:5]:
+                click.echo(f"  - {err}")
+        
+        if result.actions_taken:
+            click.echo(f"\nActions taken:")
+            for action in result.actions_taken[:10]:
+                click.echo(f"  - {action}")
+    
+    asyncio.run(_cycle())
+
+
+@genesis.command()
+@click.option("--interval", "-i", default=60, help="Seconds between cycles")
+@click.option("--max-cycles", "-m", default=None, type=int, help="Max cycles to run")
+@click.pass_context
+def run(ctx: click.Context, interval: int, max_cycles: int) -> None:
+    """Run GENESIS continuously."""
+    async def _run():
+        from .genesis import GenesisCore
+        
+        click.echo("Starting GENESIS in continuous mode...")
+        click.echo(f"Interval: {interval}s, Max cycles: {max_cycles or 'unlimited'}")
+        click.echo("Press Ctrl+C to stop.\n")
+        
+        core = GenesisCore()
+        
+        try:
+            await core.run_continuous(
+                interval_seconds=interval,
+                max_cycles=max_cycles,
+            )
+        except KeyboardInterrupt:
+            click.echo("\nStopping GENESIS...")
+        
+        status = core.get_status()
+        click.echo(f"\nFinal status:")
+        click.echo(f"  Cycles completed: {status['cycles_completed']}")
+        click.echo(f"  Uptime: {status['uptime_seconds']:.0f}s")
+    
+    asyncio.run(_run())
+
+
+@genesis.command()
+@click.pass_context
+def status(ctx: click.Context) -> None:
+    """Show GENESIS system status."""
+    async def _status():
+        from .genesis import GenesisCore, MemoryModule
+        
+        click.echo("GENESIS System Status")
+        click.echo("=" * 40)
+        
+        # Try to get memory state
+        memory = MemoryModule()
+        try:
+            state = await memory.get_state()
+            click.echo(f"Total cycles: {state.total_cycles}")
+            click.echo(f"Success rate: {state.success_rate:.1%}")
+            click.echo(f"Agents generated: {state.agents_generated}")
+            click.echo(f"Plugins generated: {state.plugins_generated}")
+            
+            if state.errors_recent:
+                click.echo(f"\nRecent errors ({len(state.errors_recent)}):")
+                for err in state.errors_recent[:3]:
+                    click.echo(f"  - {err[:60]}...")
+        except Exception as e:
+            click.echo(f"Could not retrieve memory state: {e}")
+            click.echo("(Memory may not be initialized yet)")
+    
+    asyncio.run(_status())
+
+
+@genesis.command()
+@click.pass_context
+def evolve(ctx: click.Context) -> None:
+    """Force an evolution cycle."""
+    async def _evolve():
+        from .genesis import GenesisCore
+        
+        click.echo("Forcing GENESIS evolution...")
+        core = GenesisCore()
+        
+        success = await core.force_evolve()
+        
+        if success:
+            click.echo("Evolution completed successfully!")
+        else:
+            click.echo("Evolution failed. Check logs for details.")
+    
+    asyncio.run(_evolve())
+{%- endif %}
+
+
+{%- if cookiecutter.use_google_cloud == 'y' %}
+
+
+@main.command()
+@click.pass_context
+def discover(ctx: click.Context) -> None:
+    """Discover GCP resources in the project."""
+    from .core.gcp_discovery import GCPDiscovery
+    
+    click.echo("Discovering GCP resources...")
+    discovery = GCPDiscovery()
+    
+    # Discover project
+    project = discovery.discover_project()
+    click.echo(f"\nProject: {project.project_id}")
+    click.echo(f"Region: {project.region}")
+    
+    # Discover services
+    services = discovery.discover_enabled_services()
+    enabled = [s for s in services if s.enabled]
+    click.echo(f"\nEnabled services: {len(enabled)}")
+    for svc in enabled[:10]:
+        click.echo(f"  - {svc.name}")
+    if len(enabled) > 10:
+        click.echo(f"  ... and {len(enabled) - 10} more")
+    
+    # Discover resources
+    resources = discovery.discover_all_service_resources()
+    click.echo(f"\nResources by service:")
+    for service, data in resources.items():
+        count = data.get("count", 0)
+        if count > 0:
+            click.echo(f"  - {service}: {count}")
+
+
+@main.command()
+@click.pass_context
+def verify(ctx: click.Context) -> None:
+    """Verify the production setup."""
+    import os
+    
+    click.echo("Verifying production setup...")
+    click.echo("=" * 40)
     
     checks = []
     
-    # Check 1: API Key
+    # Check API key
     api_key = os.getenv("GOOGLE_API_KEY")
-    if api_key:
-        checks.append(("API Key", True, f"{api_key[:10]}..."))
-    else:
-        checks.append(("API Key", False, "GOOGLE_API_KEY not set"))
+    checks.append(("GOOGLE_API_KEY", "set" if api_key else "missing"))
     
-    # Check 2: Gemini Connection
-    try:
-        from .agents.adk import GoogleADKAgent, ADKConfig
-        agent = GoogleADKAgent(ADKConfig())
-        response = await agent.run("Say 'OK' if you can hear me")
-        if response:
-            checks.append(("Gemini API", True, f"Response: {response[:30]}..."))
-        else:
-            checks.append(("Gemini API", False, "Empty response"))
-    except ImportError as e:
-        checks.append(("Gemini API", False, f"Import error: {e}"))
-    except Exception as e:
-        checks.append(("Gemini API", False, f"Error: {e}"))
+    # Check project
+    project = os.getenv("GOOGLE_CLOUD_PROJECT")
+    checks.append(("GOOGLE_CLOUD_PROJECT", project or "not set"))
     
-    # Check 3: Multi-agent System
+    # Check imports
     try:
-        from .agents.orchestrator import ProductionOrchestrator
-        orchestrator = ProductionOrchestrator()
-        result = await orchestrator.verify_system()
-        if result["success"]:
-            checks.append(("Multi-Agent", True, "All checks passed"))
-        else:
-            failed = [k for k, v in result["checks"].items() if not v]
-            checks.append(("Multi-Agent", False, f"Failed: {failed}"))
-    except Exception as e:
-        checks.append(("Multi-Agent", False, f"Error: {e}"))
+        from google import genai
+        checks.append(("google-genai", "installed"))
+    except ImportError:
+        checks.append(("google-genai", "not installed"))
     
-    # Check 4: Memory Store
     try:
-        from .cloud.memory_store import get_memory_store
-        store = get_memory_store()
-        stats = store.get_stats()
-        if stats["using_firestore"]:
-            checks.append(("Memory (Firestore)", True, f"Project: {stats['project_id']}"))
-        else:
-            checks.append(("Memory (In-Memory)", True, "Firestore not configured"))
-    except Exception as e:
-        checks.append(("Memory", False, f"Error: {e}"))
+        from google.cloud import firestore
+        checks.append(("google-cloud-firestore", "installed"))
+    except ImportError:
+        checks.append(("google-cloud-firestore", "not installed"))
+    
+    try:
+        from langgraph.graph import StateGraph
+        checks.append(("langgraph", "installed"))
+    except ImportError:
+        checks.append(("langgraph", "not installed"))
     
     # Print results
-    click.echo("")
-    all_passed = True
-    for name, passed, detail in checks:
-        status = click.style("[PASS]", fg="green") if passed else click.style("[FAIL]", fg="red")
-        click.echo(f"{status} {name}: {detail}")
-        if not passed:
-            all_passed = False
+    all_ok = True
+    for name, status in checks:
+        icon = "✓" if status not in ["missing", "not installed", "not set"] else "✗"
+        if icon == "✗":
+            all_ok = False
+        click.echo(f"  {icon} {name}: {status}")
     
-    click.echo("")
-    if all_passed:
-        click.echo(click.style("All systems operational!", fg="green", bold=True))
+    click.echo()
+    if all_ok:
+        click.echo("All checks passed! System ready for production.")
     else:
-        click.echo(click.style("Some checks failed. See above for details.", fg="yellow"))
-    
-    return all_passed
-
-
-async def _run_multi_agent(task: str):
-    """Run multi-agent task."""
-    from .agents.orchestrator import ProductionOrchestrator
-    
-    click.echo(click.style(f"\nExecuting multi-agent task...", fg="cyan"))
-    click.echo(f"Task: {task}\n")
-    
-    orchestrator = ProductionOrchestrator()
-    result = await orchestrator.execute_multi_agent(task)
-    
-    if result["success"]:
-        click.echo(click.style("SUCCESS", fg="green", bold=True))
-        click.echo(f"\nWorkers used: {', '.join(result['workers_used'])}")
-        click.echo(f"Execution time: {result['execution_time']:.2f}s")
-        click.echo(f"\n{'='*60}")
-        click.echo("OUTPUT:")
-        click.echo("="*60)
-        click.echo(result["output"])
-    else:
-        click.echo(click.style("FAILED", fg="red", bold=True))
-        click.echo(f"Error: {result.get('error', 'Unknown error')}")
-    
-    return result
-
-
-async def _run_single_agent(agent_type: str, query: str):
-    """Run a single agent."""
-    from .agents.adk.workers import create_worker
-    
-    click.echo(click.style(f"\nRunning {agent_type} agent...", fg="cyan"))
-    click.echo(f"Query: {query}\n")
-    
-    worker = create_worker(agent_type)
-    result = await worker.run(query)
-    
-    if result.success:
-        click.echo(click.style("SUCCESS", fg="green", bold=True))
-        click.echo(f"Duration: {result.duration_ms:.0f}ms\n")
-        click.echo("="*60)
-        click.echo("OUTPUT:")
-        click.echo("="*60)
-        click.echo(result.output)
-    else:
-        click.echo(click.style("FAILED", fg="red", bold=True))
-        click.echo(f"Error: {result.error}")
-    
-    return result
-
-
-async def _run_autopoiesis(dry_run: bool = True):
-    """Run autopoietic cycle."""
-    from .autopoiesis import run_cycle
-    
-    click.echo(click.style("\nStarting autopoietic cycle...", fg="cyan"))
-    if dry_run:
-        click.echo(click.style("(DRY RUN - no changes will be made)", fg="yellow"))
-    click.echo("")
-    
-    result = await run_cycle(dry_run=dry_run)
-    
-    if result.success:
-        click.echo(click.style("CYCLE COMPLETED", fg="green", bold=True))
-        click.echo(f"\nCycle ID: {result.cycle_id}")
-        
-        if result.cognition:
-            click.echo(f"Improvements found: {len(result.cognition.improvements)}")
-            for i, imp in enumerate(result.cognition.improvements, 1):
-                click.echo(f"  {i}. {imp.get('suggestion', 'N/A')}")
-        
-        if result.action:
-            click.echo(f"\nChanges made: {len(result.action.changes_made)}")
-            click.echo(f"Tests passed: {result.action.tests_passed}")
-            click.echo(f"Deployed: {result.action.deployed}")
-    else:
-        click.echo(click.style("CYCLE FAILED", fg="red", bold=True))
-        click.echo(f"Error: {result.error}")
-    
-    return result
-
-
-async def _show_status():
-    """Show system status."""
-    from .core.config import get_config
-    from .cloud.memory_store import get_memory_store
-    
-    config = get_config()
-    memory = get_memory_store()
-    
-    click.echo("=" * 60)
-    click.echo("SYSTEM STATUS")
-    click.echo("=" * 60)
-    
-    # Configuration
-    click.echo("\n[Configuration]")
-    click.echo(f"  Gemini Model: {config.gemini.model}")
-    click.echo(f"  API Key: {'Set' if config.gemini.api_key else 'NOT SET'}")
-    click.echo(f"  GCP Project: {config.gcp.project_id or 'NOT SET'}")
-    click.echo(f"  Debug Mode: {config.debug}")
-    click.echo(f"  Dry Run: {config.dry_run}")
-    
-    # Agent settings
-    click.echo("\n[Agent Settings]")
-    click.echo(f"  Max Concurrent: {config.agent.max_concurrent}")
-    click.echo(f"  Memory Enabled: {config.agent.enable_memory}")
-    click.echo(f"  Parallel Enabled: {config.agent.enable_parallel}")
-    
-    # Autopoiesis settings
-    click.echo("\n[Autopoiesis]")
-    click.echo(f"  Self-Improve: {config.autopoiesis.enable_self_improve}")
-    click.echo(f"  Self-Deploy: {config.autopoiesis.enable_self_deploy}")
-    
-    # Memory status
-    stats = memory.get_stats()
-    click.echo("\n[Memory Store]")
-    click.echo(f"  Using Firestore: {stats['using_firestore']}")
-    click.echo(f"  Cache Sizes: {stats['cache_sizes']}")
-{%- endif %}
-
-
-@click.command()
-{%- if cookiecutter.use_google_adk == 'y' %}
-@click.option(
-    "--multi-agent", "-m",
-    type=str,
-    help="Execute task with multi-agent system"
-)
-@click.option(
-    "--agent", "-a",
-    type=(str, str),
-    help="Run single agent: --agent TYPE QUERY (types: research, analysis, writer, code)"
-)
-@click.option(
-    "--verify", "-v",
-    is_flag=True,
-    help="Verify production system setup"
-)
-@click.option(
-    "--autopoiesis",
-    is_flag=True,
-    help="Run one autopoietic cycle"
-)
-@click.option(
-    "--no-dry-run",
-    is_flag=True,
-    help="Execute autopoiesis changes (CAUTION: modifies code)"
-)
-@click.option(
-    "--status", "-s",
-    is_flag=True,
-    help="Show system status"
-)
-{%- endif %}
-@click.version_option()
-{%- if cookiecutter.use_google_adk == 'y' %}
-def main(
-    multi_agent: Optional[str] = None,
-    agent: Optional[tuple] = None,
-    verify: bool = False,
-    autopoiesis: bool = False,
-    no_dry_run: bool = False,
-    status: bool = False,
-) -> None:
-    """{{cookiecutter.friendly_name}} - Multi-Agent Orchestration System.
-    
-    A production-ready multi-agent system using Google ADK and LangGraph.
-    
-    \b
-    Examples:
-        # Verify system setup
-        {{cookiecutter.project_name}} --verify
-        
-        # Run multi-agent task
-        {{cookiecutter.project_name}} -m "Research and summarize AI trends"
-        
-        # Run single agent
-        {{cookiecutter.project_name}} --agent research "What is quantum computing?"
-        
-        # Run autopoietic cycle (dry run)
-        {{cookiecutter.project_name}} --autopoiesis
-        
-        # Show system status
-        {{cookiecutter.project_name}} --status
-    """
-    try:
-        if verify:
-            _run_async(_verify_system())
-        elif multi_agent:
-            _run_async(_run_multi_agent(multi_agent))
-        elif agent:
-            agent_type, query = agent
-            if agent_type not in ["research", "analysis", "writer", "code"]:
-                click.echo(click.style(
-                    f"Invalid agent type: {agent_type}. Valid: research, analysis, writer, code",
-                    fg="red"
-                ))
-                sys.exit(1)
-            _run_async(_run_single_agent(agent_type, query))
-        elif autopoiesis:
-            dry_run = not no_dry_run
-            _run_async(_run_autopoiesis(dry_run=dry_run))
-        elif status:
-            _run_async(_show_status())
-        else:
-            # Default: show help
-            ctx = click.get_current_context()
-            click.echo(ctx.get_help())
-            
-    except KeyboardInterrupt:
-        click.echo("\nInterrupted by user")
-        sys.exit(130)
-    except Exception as e:
-        click.echo(click.style(f"\nError: {e}", fg="red"))
-        if os.getenv("DEBUG"):
-            import traceback
-            traceback.print_exc()
+        click.echo("Some checks failed. Review configuration.")
         sys.exit(1)
-{%- else %}
-def main() -> None:
-    """{{cookiecutter.friendly_name}}."""
-    click.echo("{{cookiecutter.friendly_name}}")
-    click.echo("Enable use_google_adk for multi-agent features.")
 {%- endif %}
 
 
