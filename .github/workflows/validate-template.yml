@@ -1,0 +1,58 @@
+name: Validate Template
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-template:
+    name: Validate Cookiecutter Template
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        use_langgraph: ["n", "y"]
+        license: ["MIT", "Apache-2.0", "GPL-3.0"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cookiecutter
+        run: pip install cookiecutter
+
+      - name: Generate project from template
+        run: |
+          cookiecutter . --no-input \
+            use_langgraph=${{ matrix.use_langgraph }} \
+            license=${{ matrix.license }}
+
+      - name: Validate generated pyproject.toml is valid TOML
+        run: |
+          python -c "
+          import tomllib
+          with open('hypermodern-python/pyproject.toml', 'rb') as f:
+              tomllib.load(f)
+          print('✓ pyproject.toml is valid TOML')
+          "
+
+      - name: Validate generated Python files have valid syntax
+        run: |
+          find hypermodern-python/src -name "*.py" -exec python -m py_compile {} \;
+          echo "✓ All Python files have valid syntax"
+
+      - name: Check for Jinja template artifacts
+        run: |
+          if grep -r "{{cookiecutter" hypermodern-python/; then
+            echo "ERROR: Found unrendered Jinja template"
+            exit 1
+          fi
+          if grep -rE "\{%|\{%-" hypermodern-python/; then
+            echo "ERROR: Found unrendered Jinja control flow"
+            exit 1
+          fi
+          echo "✓ No Jinja artifacts found"
