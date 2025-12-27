@@ -103,20 +103,20 @@ REGLAS:
 5. Mantener compatibilidad hacia atras
 
 Responde en JSON:
-{{
+{
     "analysis": "Analisis de la situacion actual",
     "improvements": [
-        {{
+        {
             "file": "ruta/al/archivo.py",
             "description": "Que mejora y por que",
             "code": "codigo python completo del archivo mejorado",
             "confidence": 0.0-1.0,
             "impact": "low|medium|high"
-        }}
+        }
     ]
-}}
-
-Si no hay mejoras necesarias, retorna improvements como lista vacia.
+    }
+    
+    Si no hay mejoras necesarias, retorna improvements como lista vacia.
 '''
 
     # Umbral de confianza para aplicar mejoras automaticamente

@@ -143,7 +143,7 @@ class RunResponse(BaseModel):
 @app.get("/health")
 async def health():
     """Health check endpoint."""
-    return {{"status": "healthy", "agent": agent.spec.name}}
+    return {"status": "healthy", "agent": agent.spec.name}
 
 
 @app.get("/spec")

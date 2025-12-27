@@ -13,6 +13,7 @@ commands:
   docs: "nox -s docs"
   linkcheck: "nox -s linkcheck"
   dependencies_table: "nox -s dependencies-table"
+  resolve_issues: "nox -s resolve-issues"
 
 protected_paths:
   - ".github/workflows"

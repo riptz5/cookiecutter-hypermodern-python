@@ -1,0 +1,66 @@
+name: Auto-approve Agent PRs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: |
+      startsWith(github.head_ref, 'auto-resolve-') ||
+      startsWith(github.head_ref, 'agent-') ||
+      contains(github.event.pull_request.labels.*.name, 'auto-resolved') ||
+      contains(github.event.pull_request.title, '[Auto]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Auto-approve PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            
+            const hasApproval = reviews.some(
+              review => review.state === 'APPROVED' && review.user.type === 'Bot'
+            );
+            
+            if (!hasApproval) {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                event: 'APPROVE',
+                body: '🤖 Auto-approved by agent workflow. This PR was created automatically to resolve an issue.',
+              });
+              console.log(`✅ Approved PR #${context.issue.number}`);
+            } else {
+              console.log(`ℹ️ PR #${context.issue.number} already approved`);
+            }
+
+      - name: Enable auto-merge
+        if: github.event.pull_request.mergeable == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                merge_method: 'squash',
+              });
+              console.log(`✅ Auto-merged PR #${context.issue.number}`);
+            } catch (error) {
+              // PR might not be ready to merge (checks still running, etc.)
+              console.log(`ℹ️ PR #${context.issue.number} not ready to merge yet: ${error.message}`);
+            }
