@@ -1,0 +1,1064 @@
+{
+  "created_at": "2025-12-27T04:57:41.322635",
+  "loops": [
+    {
+      "loop": 1,
+      "multiplier": 1.0,
+      "agents": [
+        {
+          "id": "agent-1",
+          "loop": 1,
+          "type": "security",
+          "capacity": 3
+        },
+        {
+          "id": "agent-2",
+          "loop": 1,
+          "type": "testing",
+          "capacity": 3
+        },
+        {
+          "id": "agent-3",
+          "loop": 1,
+          "type": "optimization",
+          "capacity": 3
+        },
+        {
+          "id": "agent-4",
+          "loop": 1,
+          "type": "documentation",
+          "capacity": 3
+        },
+        {
+          "id": "agent-5",
+          "loop": 1,
+          "type": "operations",
+          "capacity": 3
+        },
+        {
+          "id": "agent-6",
+          "loop": 1,
+          "type": "general",
+          "capacity": 3
+        },
+        {
+          "id": "agent-7",
+          "loop": 1,
+          "type": "architect",
+          "capacity": 3
+        }
+      ],
+      "total_agents": 7,
+      "total_capacity": 24,
+      "status": "ready",
+      "assignments": [
+        {
+          "issue": 2,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323098"
+        },
+        {
+          "issue": 10,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323483"
+        },
+        {
+          "issue": 19,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323581"
+        },
+        {
+          "issue": 7,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323320"
+        },
+        {
+          "issue": 4,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323185"
+        },
+        {
+          "issue": 20,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323588"
+        },
+        {
+          "issue": 17,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323560"
+        },
+        {
+          "issue": 22,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323604"
+        },
+        {
+          "issue": 24,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323732"
+        },
+        {
+          "issue": 9,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323309"
+        },
+        {
+          "issue": 6,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323336"
+        },
+        {
+          "issue": 31,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323689"
+        },
+        {
+          "issue": 23,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323564"
+        },
+        {
+          "issue": 16,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323463"
+        },
+        {
+          "issue": 18,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323572"
+        },
+        {
+          "issue": 30,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323726"
+        },
+        {
+          "issue": 12,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323459"
+        },
+        {
+          "issue": 29,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323720"
+        },
+        {
+          "issue": 14,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323400"
+        },
+        {
+          "issue": 5,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323170"
+        },
+        {
+          "issue": 28,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323714"
+        },
+        {
+          "issue": 27,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323708"
+        },
+        {
+          "issue": 26,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323702"
+        },
+        {
+          "issue": 13,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323473"
+        },
+        {
+          "issue": 25,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323695"
+        },
+        {
+          "issue": 11,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323489"
+        },
+        {
+          "issue": 1,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323077"
+        },
+        {
+          "issue": 15,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323496"
+        },
+        {
+          "issue": 8,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323329"
+        },
+        {
+          "issue": 3,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323200"
+        },
+        {
+          "issue": 21,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323595"
+        },
+        {
+          "issue": 32,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323849"
+        },
+        {
+          "issue": 40,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323856"
+        },
+        {
+          "issue": 33,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323865"
+        },
+        {
+          "issue": 34,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323903"
+        },
+        {
+          "issue": 35,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.323913"
+        },
+        {
+          "issue": 36,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.324164"
+        },
+        {
+          "issue": 37,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.325240"
+        },
+        {
+          "issue": 38,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.325321"
+        },
+        {
+          "issue": 39,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.325364"
+        }
+      ]
+    },
+    {
+      "loop": 2,
+      "multiplier": 1.5,
+      "agents": [
+        {
+          "id": "agent-1",
+          "loop": 2,
+          "type": "security",
+          "capacity": 3
+        },
+        {
+          "id": "agent-2",
+          "loop": 2,
+          "type": "testing",
+          "capacity": 3
+        },
+        {
+          "id": "agent-3",
+          "loop": 2,
+          "type": "optimization",
+          "capacity": 3
+        },
+        {
+          "id": "agent-4",
+          "loop": 2,
+          "type": "documentation",
+          "capacity": 3
+        },
+        {
+          "id": "agent-5",
+          "loop": 2,
+          "type": "operations",
+          "capacity": 3
+        },
+        {
+          "id": "agent-6",
+          "loop": 2,
+          "type": "general",
+          "capacity": 3
+        },
+        {
+          "id": "agent-7",
+          "loop": 2,
+          "type": "architect",
+          "capacity": 3
+        },
+        {
+          "id": "agent-8",
+          "loop": 2,
+          "type": "security",
+          "capacity": 3
+        },
+        {
+          "id": "agent-9",
+          "loop": 2,
+          "type": "testing",
+          "capacity": 3
+        },
+        {
+          "id": "agent-10",
+          "loop": 2,
+          "type": "optimization",
+          "capacity": 3
+        }
+      ],
+      "total_agents": 10,
+      "total_capacity": 35,
+      "status": "ready",
+      "assignments": [
+        {
+          "issue": 60,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326882"
+        },
+        {
+          "issue": 68,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327340"
+        },
+        {
+          "issue": 67,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327311"
+        },
+        {
+          "issue": 69,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327351"
+        },
+        {
+          "issue": 66,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327288"
+        },
+        {
+          "issue": 59,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326732"
+        },
+        {
+          "issue": 50,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326449"
+        },
+        {
+          "issue": 44,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326378"
+        },
+        {
+          "issue": 51,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326597"
+        },
+        {
+          "issue": 65,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327254"
+        },
+        {
+          "issue": 58,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326821"
+        },
+        {
+          "issue": 45,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326358"
+        },
+        {
+          "issue": 49,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326576"
+        },
+        {
+          "issue": 64,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327210"
+        },
+        {
+          "issue": 57,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326808"
+        },
+        {
+          "issue": 48,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326638"
+        },
+        {
+          "issue": 63,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327358"
+        },
+        {
+          "issue": 56,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326829"
+        },
+        {
+          "issue": 47,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326445"
+        },
+        {
+          "issue": 41,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326144"
+        },
+        {
+          "issue": 55,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326837"
+        },
+        {
+          "issue": 42,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326243"
+        },
+        {
+          "issue": 43,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326214"
+        },
+        {
+          "issue": 54,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326729"
+        },
+        {
+          "issue": 46,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326334"
+        },
+        {
+          "issue": 62,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326811"
+        },
+        {
+          "issue": 53,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326547"
+        },
+        {
+          "issue": 61,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326844"
+        },
+        {
+          "issue": 52,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.326617"
+        },
+        {
+          "issue": 70,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327170"
+        },
+        {
+          "issue": 71,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327466"
+        },
+        {
+          "issue": 79,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327472"
+        },
+        {
+          "issue": 80,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327476"
+        },
+        {
+          "issue": 72,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327483"
+        },
+        {
+          "issue": 73,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327491"
+        },
+        {
+          "issue": 75,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327499"
+        },
+        {
+          "issue": 77,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327506"
+        },
+        {
+          "issue": 74,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327514"
+        },
+        {
+          "issue": 78,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327521"
+        },
+        {
+          "issue": 76,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327528"
+        }
+      ]
+    },
+    {
+      "loop": 3,
+      "multiplier": 2.0,
+      "agents": [
+        {
+          "id": "agent-1",
+          "loop": 3,
+          "type": "security",
+          "capacity": 3
+        },
+        {
+          "id": "agent-2",
+          "loop": 3,
+          "type": "testing",
+          "capacity": 3
+        },
+        {
+          "id": "agent-3",
+          "loop": 3,
+          "type": "optimization",
+          "capacity": 3
+        },
+        {
+          "id": "agent-4",
+          "loop": 3,
+          "type": "documentation",
+          "capacity": 3
+        },
+        {
+          "id": "agent-5",
+          "loop": 3,
+          "type": "operations",
+          "capacity": 3
+        },
+        {
+          "id": "agent-6",
+          "loop": 3,
+          "type": "general",
+          "capacity": 3
+        },
+        {
+          "id": "agent-7",
+          "loop": 3,
+          "type": "architect",
+          "capacity": 3
+        },
+        {
+          "id": "agent-8",
+          "loop": 3,
+          "type": "security",
+          "capacity": 3
+        },
+        {
+          "id": "agent-9",
+          "loop": 3,
+          "type": "testing",
+          "capacity": 3
+        },
+        {
+          "id": "agent-10",
+          "loop": 3,
+          "type": "optimization",
+          "capacity": 3
+        },
+        {
+          "id": "agent-11",
+          "loop": 3,
+          "type": "documentation",
+          "capacity": 3
+        },
+        {
+          "id": "agent-12",
+          "loop": 3,
+          "type": "operations",
+          "capacity": 3
+        },
+        {
+          "id": "agent-13",
+          "loop": 3,
+          "type": "general",
+          "capacity": 3
+        },
+        {
+          "id": "agent-14",
+          "loop": 3,
+          "type": "architect",
+          "capacity": 3
+        }
+      ],
+      "total_agents": 14,
+      "total_capacity": 49,
+      "status": "ready",
+      "assignments": [
+        {
+          "issue": 104,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328262"
+        },
+        {
+          "issue": 103,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328330"
+        },
+        {
+          "issue": 94,
+          "agent_id": "agent-14",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328188"
+        },
+        {
+          "issue": 102,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328337"
+        },
+        {
+          "issue": 101,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328342"
+        },
+        {
+          "issue": 93,
+          "agent_id": "agent-13",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328181"
+        },
+        {
+          "issue": 90,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328045"
+        },
+        {
+          "issue": 84,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327970"
+        },
+        {
+          "issue": 89,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328111"
+        },
+        {
+          "issue": 100,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328320"
+        },
+        {
+          "issue": 85,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327983"
+        },
+        {
+          "issue": 99,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328348"
+        },
+        {
+          "issue": 86,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327975"
+        },
+        {
+          "issue": 81,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327879"
+        },
+        {
+          "issue": 98,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328259"
+        },
+        {
+          "issue": 91,
+          "agent_id": "agent-11",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328125"
+        },
+        {
+          "issue": 82,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327911"
+        },
+        {
+          "issue": 107,
+          "agent_id": "agent-13",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328322"
+        },
+        {
+          "issue": 92,
+          "agent_id": "agent-12",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328094"
+        },
+        {
+          "issue": 106,
+          "agent_id": "agent-12",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328360"
+        },
+        {
+          "issue": 105,
+          "agent_id": "agent-11",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328354"
+        },
+        {
+          "issue": 97,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328174"
+        },
+        {
+          "issue": 83,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.327914"
+        },
+        {
+          "issue": 96,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328201"
+        },
+        {
+          "issue": 87,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328208"
+        },
+        {
+          "issue": 88,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328119"
+        },
+        {
+          "issue": 95,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328194"
+        },
+        {
+          "issue": 108,
+          "agent_id": "agent-14",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328457"
+        },
+        {
+          "issue": 116,
+          "agent_id": "agent-8",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328463"
+        },
+        {
+          "issue": 117,
+          "agent_id": "agent-9",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328466"
+        },
+        {
+          "issue": 118,
+          "agent_id": "agent-10",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328469"
+        },
+        {
+          "issue": 119,
+          "agent_id": "agent-11",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328472"
+        },
+        {
+          "issue": 120,
+          "agent_id": "agent-12",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328475"
+        },
+        {
+          "issue": 110,
+          "agent_id": "agent-2",
+          "agent_type": "testing",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328482"
+        },
+        {
+          "issue": 109,
+          "agent_id": "agent-1",
+          "agent_type": "security",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328490"
+        },
+        {
+          "issue": 111,
+          "agent_id": "agent-3",
+          "agent_type": "optimization",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328497"
+        },
+        {
+          "issue": 112,
+          "agent_id": "agent-4",
+          "agent_type": "documentation",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328504"
+        },
+        {
+          "issue": 113,
+          "agent_id": "agent-5",
+          "agent_type": "operations",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328511"
+        },
+        {
+          "issue": 115,
+          "agent_id": "agent-7",
+          "agent_type": "architect",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328518"
+        },
+        {
+          "issue": 114,
+          "agent_id": "agent-6",
+          "agent_type": "general",
+          "status": "completed",
+          "timestamp": "2025-12-27T04:57:41.328525"
+        }
+      ]
+    }
+  ]
+}
