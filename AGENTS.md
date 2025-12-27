@@ -1,9 +1,29 @@
-
 # AGENTS.md
 
 ![AGENTS.md logo](https://agents.md/og.png)
 
 This file acts as the **single source of truth** for AI agents working on **this cookiecutter template repository**.
+
+## Reality Check - Read This First
+
+**CRITICAL FOR AI AGENTS**: This document separates what is **CURRENTLY IMPLEMENTED** from what is **FUTURE GOALS**.
+
+**CURRENTLY IMPLEMENTED (Works Now)**:
+- ✅ Code location rules (RULE 1-3) - **MANDATORY**
+- ✅ Manual testing requirement - **MANDATORY**
+- ✅ Template validation script (`tools/validate_template.py`) - **WORKS**
+- ✅ Validation checklist commands - **ALL WORK**
+
+**NOT YET IMPLEMENTED (Future Goals)**:
+- ❌ Pre-commit hooks - **DO NOT EXIST** (`.git/hooks/pre-commit` missing)
+- ❌ Pre-push hooks - **DO NOT EXIST** (`.git/hooks/pre-push` missing)
+- ❌ Automated enforcement gates - **SIMULATION ONLY** (`tools/implement_validation_gates.py` is dry-run by default)
+- ❌ `--save-checklist` flag - **DOES NOT EXIST** in `validate_template.py`
+
+**ENFORCEMENT STATUS**:
+- Rules marked **MANDATORY** = You MUST follow these. They are manually verified.
+- Rules marked **EXPECTED** = You SHOULD follow these. They will be enforced when automation exists.
+- If you see "BLOCKS" or "TECHNICALLY ENFORCED" = This is aspirational. Currently manual verification required.
 
 ## Two Levels: Template vs Generated Project
 
@@ -30,6 +50,7 @@ Files inside `{{cookiecutter.project_name}}/` are **Jinja2 templates**, not regu
 - `{%- if cookiecutter.license == 'MIT' -%}` → conditional blocks
 
 ## Identity & Goals
+
 You are an expert **Hypermodern Python Developer** working on a **Cookiecutter template**.
 Your goal is to improve the template while maintaining compatibility with generated projects.
 
@@ -37,6 +58,7 @@ Your goal is to improve the template while maintaining compatibility with genera
 > **Primary Directive**: If it's not tested, you should test it through the proposed procedure or create one by using best practices. If it breaks coverage, it needs to be fixed until it works and the code runs smoothly.
 
 ## Project Overview
+
 This is a **Cookiecutter template** for Hypermodern Python projects using `poetry` and `nox`.
 The goal is to provide a robust, modern Python project template with best practices baked in.
 
@@ -53,51 +75,7 @@ The goal is to provide a robust, modern Python project template with best practi
 pip install nox poetry
 ```
 
-### Agent Best Practices & Boundaries (STRICT RULES)
-
-**PROHIBITED ACTIONS** (NO EXCEPTIONS - TECHNICALLY ENFORCED):
-- **⛔ DO NOT** run release commands (`nox -s publish-release`) interactively.
-- **⛔ DO NOT** modify `.github/workflows` without explicit user approval.
-- **⛔ DO NOT** simplify `{{cookiecutter.*}}` expressions—they are template variables!
-- **⛔ DO NOT** present code without completing pre-presentation checklist.
-- **⛔ DO NOT** skip validation steps. (Pre-commit hook BLOCKS this)
-- **⛔ DO NOT** write code without tests. (Pre-push hook BLOCKS this)
-- **⛔ DO NOT** create unnecessary documents or files.
-- **⛔ DO NOT** bypass git hooks with `--no-verify`. (Violates process - will be caught by CI)
-
-**REQUIRED ACTIONS** (MANDATORY - TECHNICALLY ENFORCED):
-- **✅ DO** run partial test suites (`nox -s tests`) frequently.
-- **✅ DO** use "Chain of Thought": Plan → Implement → Verify → Validate → Refine → Present.
-- **✅ DO** consult `nox -l` to see all available sessions.
-- **✅ DO** write tests in the SAME session as code. (Orchestrator enforces this)
-- **✅ DO** complete validation checklist before presenting. (Pre-push hook BLOCKS without this)
-- **✅ DO** verify code works before presenting. (Pre-commit hook BLOCKS without this)
-- **✅ DO** mock all external dependencies in tests. (Test runner enforces this)
-- **✅ DO** save validation state after passing checks. (Pre-push hook requires `.validation_checklist.json`)
-
-### Thinking Process (MANDATORY - NO EXCEPTIONS)
-
-**CRITICAL**: This process MUST be followed in EXACT order. Skipping ANY step is a violation.
-
-**TECHNICAL ENFORCEMENT**: Pre-commit and pre-push hooks will BLOCK commits/pushes that violate this process.
-
-1. **Understand**: Read `AGENTS.md` COMPLETELY. Read related file context. Understand the FULL scope.
-2. **Plan**: Draft change in scratchpad or `<thinking>` block. Document ALL steps you will take.
-3. **Implement + Test**: Write code AND tests TOGETHER in the SAME session. NO code without tests. NO tests after code.
-4. **Verify**: Execute tests. Verify code works. Fix ALL failures BEFORE proceeding.
-5. **Validate**: Run validation checklist (see below). ALL checks MUST pass.
-6. **Refine**: If ANY check fails, fix it. Repeat validation. DO NOT proceed until ALL pass.
-7. **Present**: Only present to user AFTER all steps complete and ALL checks pass.
-
-**VIOLATION DETECTION**: 
-- Pre-commit hook will REJECT commits without validation
-- Pre-push hook will REJECT pushes without workflow compliance
-- If you present code without completing steps 1-6, you have violated this process
-
-## Testing & Verification
-We use `nox` to manage all testing and linting sessions.
-
-### Code Location Rules (MANDATORY)
+## Code Location Rules (MANDATORY - CURRENTLY ENFORCED)
 
 **RULE 1**: Code in `tools/` (root level) → Tests in `tests/` (root level)
 - `tools/resolve-issues.py` → `tests/test_resolve_issues.py`
@@ -109,21 +87,11 @@ We use `nox` to manage all testing and linting sessions.
 
 **RULE 3**: Tests MUST be written in the SAME session as code. NO exceptions.
 
-### Template Nox Sessions
-| Command | Purpose |
-|---------|---------|
-| `nox` | Run default sessions (linkcheck) |
-| `nox -s docs` | Build template documentation |
-| `nox -s linkcheck` | Check documentation links |
-| `nox -s dependencies-table` | Update dependencies table |
-| `nox -s prepare-release` | Prepare a GitHub release |
-| `nox -s publish-release` | Publish a GitHub release (⛔ interactive) |
+**Definition of "Session"**: A **session** is a single conversation thread with an AI agent from initial request through final presentation. Code and tests written in the same session means written in the same conversation thread.
 
-### Coverage Rule
-> [!IMPORTANT]
-> **100% Code Coverage** is strictly enforced. Any changes that drop coverage below 100% will fail the build.
+**ENFORCEMENT**: These rules are manually verified. Violations will be caught during code review.
 
-### Testing Requirements (MANDATORY)
+## Testing Requirements (MANDATORY - CURRENTLY ENFORCED)
 
 **REQUIREMENT 1**: All external dependencies MUST be mocked.
 - GitHub API calls → Mock `github3` or `requests`
@@ -140,21 +108,106 @@ We use `nox` to manage all testing and linting sessions.
 - Use coverage tools to verify
 - NO uncovered lines allowed
 
-## Cookiecutter Variables
-Variables defined in `cookiecutter.json`:
-- `project_name` - Project slug (e.g., `hypermodern-python`)
-- `package_name` - Python package name (derived)
-- `friendly_name` - Human-readable name (derived)
-- `author` - Author name
-- `email` - Author email
-- `github_user` - GitHub username
-- `version` - Initial version
-- `copyright_year` - Copyright year
-- `license` - License type (MIT, Apache-2.0, GPL-3.0)
-- `development_status` - PyPI development status
+**ENFORCEMENT**: Tests are manually verified. Code without tests will be rejected.
 
-> [!NOTE]
-> Variables `project_short_description` and `documentation` are used in templates but not defined in `cookiecutter.json`. This may need to be fixed.
+## Thinking Process (MANDATORY - MANUALLY ENFORCED)
+
+**CRITICAL**: This process MUST be followed in EXACT order. Skipping ANY step is a violation.
+
+**CURRENT ENFORCEMENT**: Manual verification. Pre-commit/pre-push hooks are planned but not yet implemented.
+
+1. **Understand**: Read `AGENTS.md` COMPLETELY. Read related file context. Understand the FULL scope.
+2. **Plan**: Draft change in scratchpad or `<thinking>` block. Document ALL steps you will take.
+3. **Implement + Test**: Write code AND tests TOGETHER in the SAME session. NO code without tests. NO tests after code.
+4. **Verify**: Execute tests. Verify code works. Fix ALL failures BEFORE proceeding.
+5. **Validate**: Run validation checklist (see below). ALL checks MUST pass.
+6. **Refine**: If ANY check fails, fix it. Repeat validation. DO NOT proceed until ALL pass.
+7. **Present**: Only present to user AFTER all steps complete and ALL checks pass.
+
+**VIOLATION DETECTION**: 
+- Currently: Manual review catches violations
+- Planned: Pre-commit hook will REJECT commits without validation (not yet implemented)
+- Planned: Pre-push hook will REJECT pushes without workflow compliance (not yet implemented)
+- If you present code without completing steps 1-6, you have violated this process
+
+## Agent Best Practices & Boundaries
+
+**PROHIBITED ACTIONS** (MANDATORY - NO EXCEPTIONS):
+- **⛔ DO NOT** run release commands (`nox -s publish-release`) interactively.
+- **⛔ DO NOT** modify `.github/workflows` without explicit user approval.
+- **⛔ DO NOT** simplify `{{cookiecutter.*}}` expressions—they are template variables!
+- **⛔ DO NOT** present code without completing pre-presentation checklist.
+- **⛔ DO NOT** skip validation steps. (Manual verification required - automation planned)
+- **⛔ DO NOT** write code without tests. (Manual verification required - automation planned)
+- **⛔ DO NOT** create unnecessary documents or files.
+- **⛔ DO NOT** bypass git hooks with `--no-verify`. (Violates process - will be caught by CI)
+
+**REQUIRED ACTIONS** (MANDATORY):
+- **✅ DO** run partial test suites (`nox -s tests`) frequently.
+- **✅ DO** use "Chain of Thought": Plan → Implement → Verify → Validate → Refine → Present.
+- **✅ DO** consult `nox -l` to see all available sessions.
+- **✅ DO** write tests in the SAME session as code. (Manually enforced - automation planned)
+- **✅ DO** complete validation checklist before presenting. (Manually enforced - automation planned)
+- **✅ DO** verify code works before presenting. (Manually enforced - automation planned)
+- **✅ DO** mock all external dependencies in tests. (Manually enforced)
+
+## Template Nox Sessions
+
+| Command | Purpose |
+|---------|---------|
+| `nox` | Run default sessions (linkcheck) |
+| `nox -s docs` | Build template documentation |
+| `nox -s linkcheck` | Check documentation links |
+| `nox -s dependencies-table` | Update dependencies table |
+| `nox -s prepare-release` | Prepare a GitHub release |
+| `nox -s publish-release` | Publish a GitHub release (⛔ interactive) |
+
+### Coverage Rule
+> [!IMPORTANT]
+> **100% Code Coverage** is strictly enforced. Any changes that drop coverage below 100% will fail the build.
+
+## Validating Templates (MANDATORY CHECKLIST)
+
+**CRITICAL**: This checklist MUST be executed BEFORE any commit. NO exceptions.
+
+**CURRENT ENFORCEMENT**: Manual execution required. Pre-commit hook is planned but not yet implemented.
+
+### Validation Checklist (Execute in Order)
+
+**All commands below are verified to work:**
+
+```bash
+# Step 1: Generate test project (overwrite if exists)
+cookiecutter . --no-input --overwrite-if-exists
+
+# Step 2: Verify TOML is valid
+# Python 3.11+: use tomllib
+python3 -c "import tomllib; f = open('hypermodern-python/pyproject.toml', 'rb'); tomllib.load(f); print('TOML OK')"
+# Python <3.11: use tomli (install: pip install tomli)
+python3 -c "import tomli; f = open('hypermodern-python/pyproject.toml', 'rb'); tomli.load(f); print('TOML OK')"
+
+# Step 3: Verify Python syntax
+find hypermodern-python/src -name "*.py" -exec python3 -m py_compile {} \;
+# OR on Windows/PowerShell:
+Get-ChildItem -Path hypermodern-python/src -Recurse -Filter "*.py" | ForEach-Object { python3 -m py_compile $_.FullName }
+
+# Step 4: Check for unrendered Jinja artifacts
+grep -r "{{cookiecutter" hypermodern-python/ && echo "ERROR: Jinja artifacts found" || echo "OK: No Jinja artifacts"
+# OR on Windows/PowerShell:
+Select-String -Path "hypermodern-python\**\*" -Pattern "{{cookiecutter" && echo "ERROR" || echo "OK"
+
+# Step 5: Verify tests pass (if applicable)
+cd hypermodern-python && nox -s tests && cd ..
+```
+
+**ALTERNATIVE**: Use validation script (this works):
+```bash
+python3 tools/validate_template.py
+```
+
+**VALIDATION RULE**: If ANY step fails, STOP. Fix the issue. Re-run validation from Step 1. DO NOT proceed until ALL steps pass.
+
+**OUTPUT REQUIREMENT**: Validation MUST produce explicit "OK" or "ERROR" messages. Ambiguous output is a failure.
 
 ## Pre-Presentation Checklist (MANDATORY)
 
@@ -174,11 +227,24 @@ Variables defined in `cookiecutter.json`:
 
 **PRESENTATION RULE**: If ANY checkbox is unchecked, DO NOT present. Fix issues. Re-validate. Present only when ALL checked.
 
-**TECHNICAL ENFORCEMENT**: 
-- Pre-commit hook validates items 4-6 automatically
-- Pre-push hook validates items 1-3 and 7-11
-- Orchestrator validates item 12 (workflow compliance)
-- If ANY item fails, the gate BLOCKS progression
+**CURRENT ENFORCEMENT**: Manual verification required. Automated enforcement is planned but not yet implemented.
+
+## Cookiecutter Variables
+
+Variables defined in `cookiecutter.json`:
+- `project_name` - Project slug (e.g., `hypermodern-python`)
+- `package_name` - Python package name (derived)
+- `friendly_name` - Human-readable name (derived)
+- `author` - Author name
+- `email` - Author email
+- `github_user` - GitHub username
+- `version` - Initial version
+- `copyright_year` - Copyright year
+- `license` - License type (MIT, Apache-2.0, GPL-3.0)
+- `development_status` - PyPI development status
+
+> [!NOTE]
+> Variables `project_short_description` and `documentation` are used in templates but not defined in `cookiecutter.json`. This may need to be fixed.
 
 ## Contribution Guidelines
 
@@ -206,148 +272,82 @@ For complex multi-step tasks, refer to the workflows defined in `.agent/workflow
 For consistent execution of common tasks:
 - **Testing**: `.agent/procedures/TESTING_PROCEDURE.md` - How to write and validate tests (READ THIS FIRST)
 
-## Technical Enforcement Gates
+## Future Automation (PLANNED - NOT YET IMPLEMENTED)
 
-**CRITICAL**: These gates are TECHNICALLY ENFORCED. They CANNOT be bypassed.
+The following features are **planned but not yet implemented**. They are documented here so agents understand what automation is coming.
 
-### Gate 1: Pre-Commit Hook (BLOCKS COMMITS)
+### Planned: Pre-Commit Hook
 
-**Location**: `.git/hooks/pre-commit` (automatically installed)
+**Status**: NOT IMPLEMENTED. Hook does not exist at `.git/hooks/pre-commit`.
 
-**What it blocks**:
-- Commits without template validation
-- Commits with invalid TOML syntax
-- Commits with Jinja artifacts
-- Commits with Python syntax errors
+**Planned Behavior**:
+- Would run automatically on `git commit`
+- Would validate: template generation, TOML syntax, Jinja artifacts, Python syntax
+- Would exit with code 1 to REJECT commits that fail
 
-**Bypass**: NONE. Hook runs automatically on `git commit`.
+**Installation** (when implemented):
+```bash
+python3 tools/implement_validation_gates.py --no-dry-run
+```
 
-**Installation**: Run `python3 tools/implement_validation_gates.py --no-dry-run` to install.
+**Current Workaround**: Manually run validation checklist before committing.
 
-### Gate 2: Pre-Push Hook (BLOCKS PUSHES)
+### Planned: Pre-Push Hook
 
-**Location**: `.git/hooks/pre-push` (automatically installed)
+**Status**: NOT IMPLEMENTED. Hook does not exist at `.git/hooks/pre-push`.
 
-**What it blocks**:
-- Pushes without validation checklist completion
-- Pushes with test coverage < 100%
-- Pushes without workflow compliance verification
+**Planned Behavior**:
+- Would run automatically on `git push`
+- Would validate: validation checklist completion, 100% test coverage, workflow compliance
+- Would exit with code 1 to REJECT pushes that fail
 
-**Bypass**: NONE. Hook runs automatically on `git push`.
+**Installation** (when implemented):
+```bash
+python3 tools/implement_validation_gates.py --no-dry-run
+```
 
-**Installation**: Run `python3 tools/implement_validation_gates.py --no-dry-run` to install.
+**Current Workaround**: Manually verify all checklist items before pushing.
 
-### Gate 3: Orchestrator Validation
+### Planned: Orchestrator Validation Gates
 
-**Location**: `ProductionOrchestrator` with validation gates
+**Status**: NOT IMPLEMENTED. `ProductionOrchestrator` does not have validation gates.
 
-**What it enforces**:
-- Sequential step completion (step N must complete before step N+1)
-- A2A protocol compliance for multi-agent coordination
-- Validation gate passing before task execution
+**Planned Behavior**:
+- Would enforce sequential step completion (step N must complete before step N+1)
+- Would use A2A protocol for multi-agent coordination
+- Would block task execution if validation gates fail
 
-**Bypass**: NONE. Built into orchestrator execution flow.
+**Current Workaround**: Manually follow the thinking process steps in order.
 
-## Validating Templates (MANDATORY CHECKLIST)
+### Planned: Validation State Tracking
 
-**CRITICAL**: This checklist MUST be executed BEFORE any commit. NO exceptions.
+**Status**: NOT IMPLEMENTED. `--save-checklist` flag does not exist in `tools/validate_template.py`.
 
-**TECHNICAL ENFORCEMENT**: Pre-commit hook will REJECT commits that fail this checklist.
+**Planned Behavior**:
+- Would save validation state to `.validation_checklist.json`
+- Would include: validation steps status, test coverage percentage, timestamp, git commit hash
+- Would be required by pre-push hook
 
-### Validation Checklist (Execute in Order)
+**Current Workaround**: `.validation_checklist.json` can be manually created if needed, but it's not required.
+
+## Verification Commands (All Verified to Work)
+
+These commands are verified to exist and work:
 
 ```bash
-# Step 1: Generate test project (overwrite if exists)
+# Validate template
+python3 tools/validate_template.py
+
+# Run tests
+python3 -m pytest tests/
+
+# Generate template
 cookiecutter . --no-input --overwrite-if-exists
 
-# Step 2: Verify TOML is valid
-# Python 3.11+: use tomllib
-python3 -c "import tomllib; f = open('hypermodern-python/pyproject.toml', 'rb'); tomllib.load(f); print('TOML OK')"
-# Python <3.11: use tomli (install: pip install tomli)
-python3 -c "import tomli; f = open('hypermodern-python/pyproject.toml', 'rb'); tomli.load(f); print('TOML OK')"
-
-# Step 3: Verify Python syntax
-find hypermodern-python/src -name "*.py" -exec python3 -m py_compile {} \;
-# OR on Windows/PowerShell:
-Get-ChildItem -Path hypermodern-python/src -Recurse -Filter "*.py" | ForEach-Object { python3 -m py_compile $_.FullName }
-
-# Step 4: Check for unrendered Jinja artifacts
-grep -r "{{cookiecutter" hypermodern-python/ && echo "ERROR: Jinja artifacts found" || echo "OK: No Jinja artifacts"
-# OR on Windows/PowerShell:
-Select-String -Path "hypermodern-python\**\*" -Pattern "{{cookiecutter" && echo "ERROR" || echo "OK"
-
-# Step 5: Verify tests pass (if applicable)
-cd hypermodern-python && nox -s tests && cd ..
+# Check for hooks (will show missing until implemented)
+test -f .git/hooks/pre-commit && echo "✅ Pre-commit hook exists" || echo "❌ Pre-commit hook missing"
+test -f .git/hooks/pre-push && echo "✅ Pre-push hook exists" || echo "❌ Pre-push hook missing"
 ```
-
-**VALIDATION RULE**: If ANY step fails, STOP. Fix the issue. Re-run validation from Step 1. DO NOT proceed until ALL steps pass.
-
-**ALTERNATIVE**: Use validation script:
-```bash
-python3 tools/validate_template.py
-```
-
-**OUTPUT REQUIREMENT**: Validation MUST produce explicit "OK" or "ERROR" messages. Ambiguous output is a failure.
-
-### Validation State Tracking
-
-**CRITICAL**: Validation state MUST be saved for pre-push hook verification.
-
-```bash
-# After successful validation, save state:
-python3 tools/validate_template.py --save-checklist
-
-# This creates `.validation_checklist.json` with:
-# - Validation steps status
-# - Test coverage percentage
-# - Timestamp
-# - Git commit hash
-```
-
-**PRE-PUSH HOOK REQUIREMENT**: `.validation_checklist.json` MUST exist and be valid for push to succeed.
-
-## Installing Enforcement Gates
-
-**CRITICAL**: Enforcement gates MUST be installed for technical validation to work.
-
-### Installation Command
-
-```bash
-# Install all validation gates (pre-commit + pre-push + orchestrator integration)
-python3 tools/implement_validation_gates.py --no-dry-run
-
-# Verify installation
-ls -la .git/hooks/pre-commit .git/hooks/pre-push
-```
-
-### Gate Status Verification
-
-```bash
-# Check if gates are installed and active
-test -f .git/hooks/pre-commit && echo "✅ Pre-commit gate installed" || echo "❌ Pre-commit gate missing"
-test -f .git/hooks/pre-push && echo "✅ Pre-push gate installed" || echo "❌ Pre-push gate missing"
-test -f .validation_checklist.json && echo "✅ Validation state exists" || echo "⚠️  No validation state"
-```
-
-### Gate Behavior
-
-**Pre-Commit Gate**:
-- Runs automatically on `git commit`
-- Cannot be bypassed (even with `--no-verify`, CI will catch it)
-- Validates: template generation, TOML syntax, Jinja artifacts, Python syntax
-- **Exit code 1 = commit REJECTED**
-
-**Pre-Push Gate**:
-- Runs automatically on `git push`
-- Cannot be bypassed
-- Validates: validation checklist completion, 100% test coverage, workflow compliance
-- **Exit code 1 = push REJECTED**
-
-**Orchestrator Gate**:
-- Built into `ProductionOrchestrator`
-- Enforces sequential step completion
-- Blocks task execution if validation gates fail
-- **Returns error = task BLOCKED**
 
 ---
 *Generated based on [agents.md](https://agents.md) philosophy.*
