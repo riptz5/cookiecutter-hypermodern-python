@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-12-27T02:14:14.739188",
+  "message": "\u26a0\ufe0f  IMPORTANT: Other agents must follow AGENTS.md rules",
+  "mandatory_rules": [
+    "RULE 1: Code in tools/ \u2192 Tests in tests/",
+    "RULE 2: Code in {{cookiecutter.project_name}}/src/ \u2192 Tests in {{cookiecutter.project_name}}/tests/",
+    "RULE 3: Tests MUST be written in SAME session as code",
+    "TEST REQUIREMENT 1: All external dependencies MUST be mocked",
+    "TEST REQUIREMENT 2: Tests MUST pass before code is complete",
+    "TEST REQUIREMENT 3: 100% code coverage for new code"
+  ],
+  "thinking_process": [
+    "1. Understand - Read AGENTS.md COMPLETELY",
+    "2. Plan - Draft change, document steps",
+    "3. Implement + Test - Code AND tests TOGETHER (same session)",
+    "4. Verify - Execute tests, verify code works",
+    "5. Validate - Run validation checklist, ALL checks MUST pass",
+    "6. Refine - If ANY check fails, fix and repeat",
+    "7. Present - Only after ALL steps complete"
+  ],
+  "prohibited_actions": [
+    "DO NOT run release commands interactively",
+    "DO NOT modify .github/workflows without explicit approval",
+    "DO NOT simplify {{cookiecutter.*}} expressions",
+    "DO NOT present code without pre-presentation checklist",
+    "DO NOT skip validation steps",
+    "DO NOT write code without tests",
+    "DO NOT bypass git hooks with --no-verify"
+  ]
+}
